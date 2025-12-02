@@ -19,6 +19,7 @@ backend/.env
 backend/.env.local
 frontend/.env
 frontend/.env.local
+frontend/build
 
 # Build outputs
 dist/

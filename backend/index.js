@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
+import bookingsRouter from "./routes/bookings.js";
 
 dotenv.config();
 
@@ -24,6 +25,8 @@ async function start() {
       autoIndex: true,
     });
     console.log("Connected to MongoDB");
+    app.use("/api/bookings", bookingsRouter);
+      
 
     app.listen(PORT, () => {
       console.log(`Server listening on http://localhost:${PORT}`);

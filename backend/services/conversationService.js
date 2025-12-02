@@ -1,8 +1,8 @@
 // services/conversationService.js
 // Manage multi-turn voice conversations and build booking data incrementally
 
-import { GoogleGenAI } from '@google/genai';
-import { generateVoiceResponse } from './geminiVoiceService.js';
+import { GoogleGenAI } from "@google/genai";
+import { generateVoiceResponse } from "./geminiVoiceService.js";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -29,7 +29,7 @@ export async function processConversationTurn(sessionId, userMessage) {
         cuisinePreference: null,
         specialRequests: null,
         seatingPreference: null,
-        location: 'New Delhi',
+        location: "New Delhi",
       },
       createdAt: Date.now(),
     };
@@ -37,11 +37,14 @@ export async function processConversationTurn(sessionId, userMessage) {
   }
 
   // Add user message to history
-  conversation.history.push({ role: 'user', message: userMessage });
+  conversation.history.push({ role: "user", message: userMessage });
 
   try {
     // Extract and update booking information from conversation
-    const updatedData = await extractBookingInfo(conversation.history, conversation.bookingData);
+    const updatedData = await extractBookingInfo(
+      conversation.history,
+      conversation.bookingData
+    );
     conversation.bookingData = { ...conversation.bookingData, ...updatedData };
 
     // Check if booking is complete
@@ -56,7 +59,7 @@ export async function processConversationTurn(sessionId, userMessage) {
     );
 
     // Add assistant response to history
-    conversation.history.push({ role: 'assistant', message: response });
+    conversation.history.push({ role: "assistant", message: response });
 
     return {
       response,
@@ -65,7 +68,7 @@ export async function processConversationTurn(sessionId, userMessage) {
       missingFields: getMissingFields(conversation.bookingData),
     };
   } catch (err) {
-    console.error('Conversation error:', err.message);
+    console.error("Conversation error:", err.message);
     return {
       response: "I'm sorry, could you repeat that?",
       bookingData: conversation.bookingData,
@@ -80,9 +83,11 @@ export async function processConversationTurn(sessionId, userMessage) {
  */
 async function extractBookingInfo(history, currentData) {
   const model = ai.models;
-  
-  const conversationText = history.map(h => `${h.role}: ${h.message}`).join('\n');
-  
+
+  const conversationText = history
+    .map((h) => `${h.role}: ${h.message}`)
+    .join("\n");
+
   const prompt = `Extract booking information from this conversation. Return ONLY a JSON object with updated fields (use null for missing data).
 
 Current booking data:
@@ -91,7 +96,9 @@ ${JSON.stringify(currentData, null, 2)}
 Conversation:
 ${conversationText}
 
-Extract and return ONLY updated fields as JSON (today is ${new Date().toISOString().split('T')[0]}):
+Extract and return ONLY updated fields as JSON (today is ${
+    new Date().toISOString().split("T")[0]
+  }):
 {
   "customerName": "string or null",
   "numberOfGuests": number or null,
@@ -111,18 +118,22 @@ Rules:
 
   try {
     const result = await model.generateContent({
-      model: 'gemini-2.5-flash',
+      model: "gemini-2.5-flash",
       contents: prompt,
     });
-    const text = result.text.trim().replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const text = result.text
+      .trim()
+      .replace(/```json\n?/g, "")
+      .replace(/```\n?/g, "")
+      .trim();
     const parsed = JSON.parse(text);
-    
+
     // Only return non-null updates
     return Object.fromEntries(
       Object.entries(parsed).filter(([_, v]) => v !== null && v !== undefined)
     );
   } catch (err) {
-    console.error('Extract error:', err.message);
+    console.error("Extract error:", err.message);
     return {};
   }
 }
@@ -130,35 +141,49 @@ Rules:
 /**
  * Generate contextual response based on conversation state
  */
-async function generateContextualResponse(userMessage, bookingData, isComplete, history) {
+async function generateContextualResponse(
+  userMessage,
+  bookingData,
+  isComplete,
+  history
+) {
   const missingFields = getMissingFields(bookingData);
-  
+
   const contextPrompt = `You are a friendly restaurant booking assistant in a voice conversation.
 
 Current booking data:
 ${JSON.stringify(bookingData, null, 2)}
 
-${isComplete ? 'All required information collected!' : `Still need: ${missingFields.join(', ')}`}
+${
+  isComplete
+    ? "All required information collected!"
+    : `Still need: ${missingFields.join(", ")}`
+}
 
 Recent conversation:
-${history.slice(-4).map(h => `${h.role}: ${h.message}`).join('\n')}
+${history
+  .slice(-4)
+  .map((h) => `${h.role}: ${h.message}`)
+  .join("\n")}
 
 User just said: "${userMessage}"
 
 Generate a SHORT (1-2 sentences) natural response:
-${isComplete 
-  ? '- Confirm the complete booking details warmly' 
-  : '- Ask for ONE missing piece of information naturally\n- Be conversational, not robotic'}`;
+${
+  isComplete
+    ? "- Confirm the complete booking details warmly"
+    : "- Ask for ONE missing piece of information naturally\n- Be conversational, not robotic"
+}`;
 
   try {
     const result = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: "gemini-2.5-flash",
       contents: contextPrompt,
     });
     return result.text.trim();
   } catch (err) {
-    console.error('Response generation error:', err.message);
-    
+    console.error("Response generation error:", err.message);
+
     if (!isComplete && missingFields.length > 0) {
       const field = missingFields[0];
       const prompts = {
@@ -189,8 +214,13 @@ function isBookingComplete(data) {
  * Get list of missing required fields
  */
 function getMissingFields(data) {
-  const required = ['customerName', 'numberOfGuests', 'bookingDate', 'bookingTime'];
-  return required.filter(field => !data[field]);
+  const required = [
+    "customerName",
+    "numberOfGuests",
+    "bookingDate",
+    "bookingTime",
+  ];
+  return required.filter((field) => !data[field]);
 }
 
 /**

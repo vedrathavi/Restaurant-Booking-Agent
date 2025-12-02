@@ -1,11 +1,11 @@
 // services/geminiService.js
 // Format natural language user input into structured booking data
 
-import { GoogleGenAI } from '@google/genai';
-import dotenv from 'dotenv';
+import { GoogleGenAI } from "@google/genai";
+import dotenv from "dotenv";
 dotenv.config();
 
-const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 /**
  * Parse natural language booking request into structured data
@@ -30,22 +30,27 @@ Extract and return ONLY a valid JSON object with these fields (use null if not m
 }
 
 Important:
-- Convert relative dates like "tomorrow", "next Friday" to YYYY-MM-DD (assume today is ${new Date().toISOString().split('T')[0]})
+- Convert relative dates like "tomorrow", "next Friday" to YYYY-MM-DD (assume today is ${
+    new Date().toISOString().split("T")[0]
+  })
 - Convert times like "7pm", "dinner time" to 24h format (19:00 for 7pm, 19:30 for dinner)
 - Return ONLY the JSON object, no markdown, no explanations`;
 
   try {
     const result = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt
+      model: "gemini-2.5-flash",
+      contents: prompt,
     });
     const text = result.text.trim();
-    
+
     // Remove markdown code blocks if present
-    const jsonText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    
+    const jsonText = text
+      .replace(/```json\n?/g, "")
+      .replace(/```\n?/g, "")
+      .trim();
+
     const parsed = JSON.parse(jsonText);
-    
+
     // Clean up and validate
     return {
       customerName: parsed.customerName || null,
@@ -53,12 +58,14 @@ Important:
       bookingDate: parsed.bookingDate || null,
       bookingTime: parsed.bookingTime || null,
       cuisinePreference: parsed.cuisinePreference || null,
-      specialRequests: parsed.specialRequests || 'No special requests',
+      specialRequests: parsed.specialRequests || "No special requests",
       seatingPreference: parsed.seatingPreference || null,
-      location: parsed.location || 'New Delhi',
+      location: parsed.location || "New Delhi",
     };
   } catch (err) {
-    console.error('Gemini formatting error:', err.message);
-    throw new Error('Failed to parse booking request. Please provide clearer details.');
+    console.error("Gemini formatting error:", err.message);
+    throw new Error(
+      "Failed to parse booking request. Please provide clearer details."
+    );
   }
 }

@@ -1,11 +1,11 @@
 // services/geminiVoiceService.js
 // Generate natural, human-like responses for voice chat interactions
 
-import { GoogleGenAI } from '@google/genai';
-import dotenv from 'dotenv';
+import { GoogleGenAI } from "@google/genai";
+import dotenv from "dotenv";
 dotenv.config();
 
-const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 /**
  * Generate natural conversation response for voice chat
@@ -24,9 +24,21 @@ Guidelines:
 - Use casual, natural language suitable for voice chat
 - Avoid technical jargon or overly formal language
 
-${context.bookingData ? `Current booking details: ${JSON.stringify(context.bookingData)}` : ''}
-${context.weatherInfo ? `Weather: ${context.weatherInfo.condition}, ${context.weatherInfo.temperature}°C` : ''}
-${context.seatingRecommendation ? `Recommended seating: ${context.seatingRecommendation}` : ''}`;
+${
+  context.bookingData
+    ? `Current booking details: ${JSON.stringify(context.bookingData)}`
+    : ""
+}
+${
+  context.weatherInfo
+    ? `Weather: ${context.weatherInfo.condition}, ${context.weatherInfo.temperature}°C`
+    : ""
+}
+${
+  context.seatingRecommendation
+    ? `Recommended seating: ${context.seatingRecommendation}`
+    : ""
+}`;
 
   const prompt = `${systemContext}
 
@@ -36,12 +48,12 @@ Respond naturally as a voice assistant:`;
 
   try {
     const result = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt
+      model: "gemini-2.5-flash",
+      contents: prompt,
     });
     return result.text.trim();
   } catch (err) {
-    console.error('Gemini voice response error:', err.message);
+    console.error("Gemini voice response error:", err.message);
     return "I'm sorry, I didn't quite catch that. Could you repeat?";
   }
 }
@@ -60,20 +72,24 @@ Booking details:
 - Date: ${booking.bookingDate}
 - Time: ${booking.bookingTime}
 - Guests: ${booking.numberOfGuests}
-- Seating: ${booking.seatingPreference || 'not specified'}
+- Seating: ${booking.seatingPreference || "not specified"}
 - Booking ID: ${booking.bookingId}
-${weatherInfo ? `- Weather: ${weatherInfo.condition}, ${weatherInfo.temperature}°C` : ''}
+${
+  weatherInfo
+    ? `- Weather: ${weatherInfo.condition}, ${weatherInfo.temperature}°C`
+    : ""
+}
 
 Keep it natural, mention the booking ID, and wish them a great time.`;
 
   try {
     const result = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt
+      model: "gemini-2.5-flash",
+      contents: prompt,
     });
     return result.text.trim();
   } catch (err) {
-    console.error('Gemini confirmation error:', err.message);
+    console.error("Gemini confirmation error:", err.message);
     return `Great! Your booking for ${booking.numberOfGuests} guests on ${booking.bookingDate} at ${booking.bookingTime} is confirmed. Your booking ID is ${booking.bookingId}. Looking forward to seeing you!`;
   }
 }

@@ -6,6 +6,10 @@ import {
   FaStop,
 } from "react-icons/fa";
 
+/**
+ * Floating circular controls for the voice assistant.
+ * Props: showContinuePrompt, isActive, isListening, handlers for actions.
+ */
 export default function VoiceControls({
   showContinuePrompt,
   isActive,

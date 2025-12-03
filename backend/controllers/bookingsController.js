@@ -1,12 +1,21 @@
 import Booking from "../models/Booking.js";
 import mongoose from "mongoose";
 
+/**
+ * Resolves a query object by accepting either Mongo _id or nanoid bookingId.
+ * @param {string} id
+ * @returns {object|null} Mongo query filter
+ */
 function resolveQueryById(id) {
   if (!id) return null;
   // If valid ObjectId, match by _id; otherwise, use bookingId
   return mongoose.isValidObjectId(id) ? { _id: id } : { bookingId: id };
 }
 
+/**
+ * POST /api/bookings
+ * Creates a new booking document in MongoDB.
+ */
 export async function createBooking(req, res) {
   try {
     const doc = await Booking.create(req.body);
@@ -16,6 +25,10 @@ export async function createBooking(req, res) {
   }
 }
 
+/**
+ * GET /api/bookings
+ * Lists all bookings ordered by creation time (newest first).
+ */
 export async function listBookings(req, res) {
   try {
     const items = await Booking.find().sort({ createdAt: -1 });
@@ -25,6 +38,10 @@ export async function listBookings(req, res) {
   }
 }
 
+/**
+ * GET /api/bookings/:id
+ * Retrieves a booking by Mongo _id or nanoid bookingId.
+ */
 export async function getBooking(req, res) {
   try {
     const query = resolveQueryById(req.params.id);
@@ -37,6 +54,10 @@ export async function getBooking(req, res) {
   }
 }
 
+/**
+ * DELETE /api/bookings/:id
+ * Deletes a booking by Mongo _id or nanoid bookingId.
+ */
 export async function deleteBooking(req, res) {
   try {
     const query = resolveQueryById(req.params.id);

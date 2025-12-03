@@ -4,6 +4,11 @@ import { useState, useRef, useCallback, useEffect } from "react";
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
 
+/**
+ * Speech-to-Text hook using the Web Speech API.
+ * @param {{onResult:(text:string)=>void,onError:(err:any)=>void}} params
+ * @returns {{startListening:Function, stopListening:Function, isListening:boolean}}
+ */
 export function useSpeechRecognition({ onResult, onError }) {
   const recognitionRef = useRef(null);
   const [isListening, setIsListening] = useState(false);

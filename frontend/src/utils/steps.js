@@ -1,4 +1,4 @@
-// Centralized conversation steps for voice booking
+// Centralized conversation steps for the voice booking state machine
 export const STEPS = {
   IDLE: "IDLE",
   ASK_NAME: "ASK_NAME",

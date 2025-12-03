@@ -11,6 +11,10 @@ if (!HOST && typeof window !== "undefined") {
   );
 }
 
+/**
+ * Preconfigured Axios client for frontend → backend API calls.
+ * Base URL comes from Vite env via HOST.
+ */
 const apiClient = axios.create({
   baseURL,
   headers: {

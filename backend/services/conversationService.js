@@ -15,10 +15,13 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const conversations = new Map();
 
 /**
- * Process a voice message in an ongoing conversation
- * @param {string} sessionId - Unique conversation identifier
- * @param {string} userMessage - Current user voice input
- * @returns {object} { response, bookingData, isComplete }
+ * Process a single user turn for a session.
+ * Updates booking fields via Gemini, generates assistant reply,
+ * and returns current conversation state.
+ *
+ * @param {string} sessionId Unique conversation identifier
+ * @param {string} userMessage Current user voice input
+ * @returns {{response: string, bookingData: object, isComplete: boolean, missingFields: string[]}}
  */
 export async function processConversationTurn(sessionId, userMessage) {
   // Get or create conversation context
@@ -84,7 +87,12 @@ export async function processConversationTurn(sessionId, userMessage) {
 }
 
 /**
- * Extract booking information from conversation history
+ * Extracts booking fields from recent conversation using Gemini.
+ * Only returns fields present and valid in the latest user message.
+ *
+ * @param {Array<{role:string,message:string}>} history Conversation history
+ * @param {object} currentData Existing booking data
+ * @returns {Promise<object>} Partial booking fields to merge
  */
 async function extractBookingInfo(history, currentData) {
   const model = ai.models;
@@ -197,7 +205,14 @@ Empty response if nothing new: {}`;
 }
 
 /**
- * Generate contextual response based on conversation state
+ * Generates a short, contextual assistant reply.
+ * Applies anti-loop rules and moves the conversation forward.
+ *
+ * @param {string} userMessage Latest user input
+ * @param {object} bookingData Current booking data
+ * @param {boolean} isComplete All required fields present
+ * @param {Array<{role:string,message:string}>} history Recent conversation
+ * @returns {Promise<string>} Assistant message
  */
 async function generateContextualResponse(
   userMessage,
@@ -318,14 +333,14 @@ ${
 // Moved helpers to conversationUtils.js
 
 /**
- * Clear conversation history (call after booking confirmed)
+ * Clears and forgets a conversation (after booking confirmed).
  */
 export function clearConversation(sessionId) {
   conversations.delete(sessionId);
 }
 
 /**
- * Get current conversation state
+ * Returns the current conversation snapshot for a session.
  */
 export function getConversation(sessionId) {
   return conversations.get(sessionId);

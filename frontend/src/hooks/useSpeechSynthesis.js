@@ -1,6 +1,10 @@
 // TTS hook using Web Speech API
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * Text-to-Speech hook using the Web Speech API.
+ * Provides speak(text, onEnd?) and stop() controls.
+ */
 export function useSpeechSynthesis() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voicesLoaded, setVoicesLoaded] = useState(false);

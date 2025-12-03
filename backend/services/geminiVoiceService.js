@@ -1,5 +1,7 @@
 // services/geminiVoiceService.js
-// Generate natural, human-like responses for voice chat interactions
+// Generates natural, human-like responses for voice chat interactions.
+// Optional: The main flow uses concise contextual responses; this module
+// can be used when richer voice output is desired.
 
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";

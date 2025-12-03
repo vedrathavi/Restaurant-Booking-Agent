@@ -1,6 +1,12 @@
 // utils/seatingRecommendation.js
 // Rule-based logic to recommend indoor vs outdoor seating
 
+/**
+ * Rule-based indoor/outdoor recommendation.
+ * Prefers indoor for extreme temps or rain; outdoor for pleasant conditions.
+ * @param {object} weatherData Normalized forecast entry
+ * @returns {"indoor"|"outdoor"}
+ */
 export function recommendSeating(weatherData) {
   if (!weatherData) return "indoor"; // default safe choice
 

@@ -19,6 +19,13 @@ const CITY_COORDS = {
   ahmedabad: { lat: 23.0225, lon: 72.5714 },
 };
 
+/**
+ * Fetches 5-day/3-hour forecast for a city.
+ * Validates bookingDate within next 5 days (and not past).
+ * @param {string} city
+ * @param {string} bookingDate YYYY-MM-DD
+ * @returns {Promise<object>} OpenWeatherMap API response
+ */
 export async function fetchWeatherForecast(city = DEFAULT_CITY, bookingDate) {
   const apiKey = process.env.WEATHER_API_KEY;
 
@@ -66,6 +73,13 @@ export async function fetchWeatherForecast(city = DEFAULT_CITY, bookingDate) {
   return res.json();
 }
 
+/**
+ * Finds forecast entry closest to desired date/time.
+ * @param {object} apiResponse Raw response from OpenWeatherMap 5-day API
+ * @param {string} bookingDate YYYY-MM-DD
+ * @param {string} bookingTime HH:MM
+ * @returns {object|null} Normalized forecast entry
+ */
 export function findClosestForecast(apiResponse, bookingDate, bookingTime) {
   // bookingDate: "YYYY-MM-DD", bookingTime: "HH:MM"
   // Note: This function assumes bookingDate is within 5-day forecast window (validated upstream)

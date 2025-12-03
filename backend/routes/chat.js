@@ -5,6 +5,12 @@ import { getWeatherAndRecommendation } from "../services/weatherService.js";
 
 const router = express.Router();
 
+/**
+ * POST /api/chat
+ * Processes a conversation turn or performs a weather lookup when requested.
+ * Body: { sessionId, message, bookingData }
+ * Returns assistant response and any updated booking fields.
+ */
 router.post("/", async (req, res) => {
   try {
     const { sessionId, message, bookingData } = req.body;

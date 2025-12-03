@@ -1,5 +1,6 @@
 // services/geminiService.js
-// Format natural language user input into structured booking data
+// Legacy helper: formats NL input into structured booking data.
+// Note: Not used in the current conversation flow.
 
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";

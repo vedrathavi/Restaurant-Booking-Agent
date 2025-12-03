@@ -10,6 +10,10 @@ import {
 } from "react-icons/fa";
 import { STEPS } from "../utils/steps";
 
+/**
+ * Editable form for booking details.
+ * Props: isActive, booking, onFieldChange(field,value), step, onConfirm(nextStep)
+ */
 export default function BookingForm({
   isActive,
   booking,

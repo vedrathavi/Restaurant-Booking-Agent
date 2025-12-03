@@ -1,5 +1,10 @@
 import { FaPlay, FaMicrophone } from "react-icons/fa";
 
+/**
+ * Presentational component for the conversation area.
+ * Shows user/bot messages and voice status badges.
+ * Props: conversation[], isSpeaking, isListening, endRef
+ */
 export default function ConversationPane({
   conversation = [],
   isSpeaking = false,

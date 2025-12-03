@@ -21,6 +21,11 @@ import BookingForm from "./BookingForm";
 
 const STORAGE_KEY = "hotel_booking_session";
 
+/**
+ * Container component orchestrating the voice-first booking flow.
+ * Manages conversation state, calls backend (Gemini + weather),
+ * and coordinates UI components.
+ */
 export default function VoiceBooking() {
   // Load from localStorage on mount
   const loadFromStorage = () => {
@@ -105,7 +110,7 @@ export default function VoiceBooking() {
     );
   };
 
-  // Start booking flow
+  // Start booking flow (greets and begins listening)
   const startBooking = async () => {
     setIsActive(true);
     setStep(STEPS.ASK_NAME);
@@ -128,7 +133,7 @@ export default function VoiceBooking() {
     });
   };
 
-  // Continue from saved state
+  // Continue from saved session (localStorage)
   const continueBooking = async () => {
     setShowContinuePrompt(false);
     setIsActive(true);
@@ -137,7 +142,7 @@ export default function VoiceBooking() {
     setTimeout(() => startListening(), 1000);
   };
 
-  // Start fresh booking
+  // Start a fresh booking (clears session)
   const startFreshBooking = () => {
     setShowContinuePrompt(false);
     localStorage.removeItem(STORAGE_KEY);
@@ -146,7 +151,7 @@ export default function VoiceBooking() {
     startBooking();
   };
 
-  // Handle user speech input
+  // Handle recognized user speech transcript
   async function handleUserSpeech(transcript) {
     stopListening();
     addMessage("user", transcript);
@@ -197,7 +202,7 @@ export default function VoiceBooking() {
     await processWithGemini(transcript);
   }
 
-  // Process conversation with Gemini AI
+  // Send user message to backend (Gemini) and merge extracted fields
   async function processWithGemini(userMessage) {
     try {
       // If we're at seating confirmation (weather) or final confirmation, handle locally
@@ -369,7 +374,7 @@ export default function VoiceBooking() {
     }
   }
 
-  // Move to next step (used for manual confirmation)
+  // Move state machine to next step
   async function moveTo(nextStep) {
     setStep(nextStep);
 
@@ -409,7 +414,7 @@ export default function VoiceBooking() {
     }
   }
 
-  // Fetch weather and suggest seating
+  // Fetch weather forecast and suggest seating
   async function fetchWeatherAndRespond() {
     try {
       setStep(STEPS.FETCH_WEATHER);
@@ -460,7 +465,7 @@ export default function VoiceBooking() {
     }
   }
 
-  // Save booking to backend
+  // Save completed booking to backend (MongoDB)
   async function saveBookingToServer() {
     try {
       setStep(STEPS.SAVE_BOOKING);
@@ -504,7 +509,7 @@ export default function VoiceBooking() {
     }
   }
 
-  // Speak and display message
+  // Speaks a bot message and shows it in the conversation
   async function speakAndShow(text) {
     addMessage("bot", text);
 
@@ -531,7 +536,7 @@ export default function VoiceBooking() {
     });
   }
 
-  // Reset booking state
+  // Reset all state and end the current session
   function resetBooking() {
     localStorage.removeItem(STORAGE_KEY);
     setStep(STEPS.IDLE);
@@ -557,12 +562,12 @@ export default function VoiceBooking() {
     stopSpeaking();
   }
 
-  // Handle manual edit of booking fields
+  // Manual form field edit handler
   const handleFieldChange = (field, value) => {
     setBooking((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Handle confirmation response
+  // Handles seating confirmation and final booking confirmation
   async function handleConfirmation(userMessage) {
     const lower = userMessage.toLowerCase();
 

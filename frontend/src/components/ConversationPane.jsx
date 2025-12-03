@@ -35,7 +35,9 @@ export default function ConversationPane({
             {conversation.map((msg, idx) => (
               <div
                 key={idx}
-                className={`flex ${msg.type === "user" ? "justify-end" : "justify-start"}`}
+                className={`flex ${
+                  msg.type === "user" ? "justify-end" : "justify-start"
+                }`}
               >
                 <div
                   className={`max-w-[80%] rounded-xl px-12 py-4 ${
@@ -47,7 +49,11 @@ export default function ConversationPane({
                   }`}
                 >
                   <p className="text-xs font-semibold mb-1 opacity-70">
-                    {msg.type === "user" ? "You" : msg.type === "bot" ? "Assistant" : "Error"}
+                    {msg.type === "user"
+                      ? "You"
+                      : msg.type === "bot"
+                      ? "Assistant"
+                      : "Error"}
                   </p>
                   <p className="text-sm leading-relaxed">{msg.text}</p>
                 </div>

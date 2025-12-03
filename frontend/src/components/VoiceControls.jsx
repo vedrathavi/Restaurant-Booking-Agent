@@ -1,4 +1,10 @@
-import { FaMicrophone, FaMicrophoneSlash, FaPlay, FaRedo, FaStop } from "react-icons/fa";
+import {
+  FaMicrophone,
+  FaMicrophoneSlash,
+  FaPlay,
+  FaRedo,
+  FaStop,
+} from "react-icons/fa";
 
 export default function VoiceControls({
   showContinuePrompt,
@@ -51,14 +57,12 @@ export default function VoiceControls({
             title={isListening ? "Stop Listening" : "Speak"}
             aria-label={isListening ? "Stop Listening" : "Speak"}
             className={`w-16 h-16 flex items-center justify-center ${
-              isListening ? "bg-orange-600 hover:bg-orange-700" : "bg-green-600 hover:bg-green-700"
+              isListening
+                ? "bg-orange-600 hover:bg-orange-700"
+                : "bg-green-600 hover:bg-green-700"
             } text-white rounded-full transition shadow-lg text-xl`}
           >
-            {isListening ? (
-              <FaMicrophoneSlash />
-            ) : (
-              <FaMicrophone />
-            )}
+            {isListening ? <FaMicrophoneSlash /> : <FaMicrophone />}
           </button>
           <button
             onClick={onCancel}

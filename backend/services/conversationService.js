@@ -3,7 +3,11 @@
 
 import { GoogleGenAI } from "@google/genai";
 import { generateVoiceResponse } from "./geminiVoiceService.js";
-import { isBookingComplete, getMissingFields, getOptionalMissingFields } from "./conversationUtils.js";
+import {
+  isBookingComplete,
+  getMissingFields,
+  getOptionalMissingFields,
+} from "./conversationUtils.js";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 

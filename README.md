@@ -5,6 +5,7 @@ An intelligent AI-powered voice-first restaurant booking system that combines na
 ## ✨ Key Features
 
 ### Voice & Conversation
+
 - 🎤 **Hands-Free Voice Booking** - Complete booking flow using Web Speech API (TTS + STT)
 - 💬 **Real-Time Conversation UI** - Live display of user speech and bot responses with message bubbles
 - 🔄 **Session Persistence** - Resume interrupted bookings automatically via localStorage
@@ -12,6 +13,7 @@ An intelligent AI-powered voice-first restaurant booking system that combines na
 - 🗣️ **Natural Responses** - Gemini AI generates contextual, casual, and human-like replies
 
 ### Intelligence & Automation
+
 - 🌤️ **Weather-Aware Seating** - Fetches 5-day forecast from OpenWeatherMap and recommends indoor/outdoor seating
 - 📅 **Smart Date Parsing** - Understands "today", "tomorrow", "day after tomorrow" with automatic validation
 - ⏰ **Time Zone Support** - IST (Indian Standard Time) for date/time calculations and validations
@@ -19,6 +21,7 @@ An intelligent AI-powered voice-first restaurant booking system that combines na
 - ✅ **Multi-Layer Validation** - Date/time validation across frontend, backend routes, and services
 
 ### User Experience
+
 - 📱 **Responsive Two-Column Layout** - Voice assistant on left, booking form on right
 - 🎨 **Circular Control Buttons** - Fixed bottom-center dock with accessible icon-only controls
 - ✏️ **Hybrid Input** - Voice + manual editing; users can correct any field in the form
@@ -26,6 +29,7 @@ An intelligent AI-powered voice-first restaurant booking system that combines na
 - 🎭 **Progressive Form Display** - Fields update in real-time as conversation proceeds
 
 ### Technical Excellence
+
 - 🧩 **Modular Architecture** - Clean separation: components, hooks, utils, services
 - 🔧 **Reusable Utilities** - Shared patterns for voice intents, steps, and validation helpers
 - 🔐 **Error Handling** - Graceful fallbacks for speech recognition, API failures, and network issues
@@ -36,29 +40,34 @@ An intelligent AI-powered voice-first restaurant booking system that combines na
 ### Design Philosophy
 
 **1. Voice-First with Manual Fallback**
+
 - Designed for hands-free operation but never locks users into voice-only interaction
 - Every field can be edited manually in the form while voice conversation continues
 - Speech recognition errors don't block progress—users can type corrections
 
 **2. Progressive Conversation Flow**
+
 - Step-based state machine (IDLE → ASK_NAME → ASK_GUESTS → ASK_DATE → ASK_TIME → ASK_CUISINE → ASK_SPECIAL_REQUEST → FETCH_WEATHER → CONFIRM_DETAILS → SAVE_BOOKING → COMPLETE)
 - Bot asks one question at a time; moves forward only when field is filled
 - Optional fields (cuisine, special requests) asked after required fields
 - Weather fetch happens automatically after all fields collected
 
 **3. Intelligent Context Management**
+
 - Backend maintains conversation history per session ID
 - Gemini AI extracts booking data incrementally from multi-turn dialogue
 - Anti-loop protection: bot never repeats the same question twice in a row
 - Modification detection: user can change any field mid-conversation ("change date to tomorrow")
 
 **4. Weather Integration**
+
 - Fetches real 5-day forecast from OpenWeatherMap (3-hour intervals)
 - Finds closest time slot to booking date/time
 - Applies seating rules: temperature (18-30°C outdoor), rain probability (<40% outdoor), weather condition (clear/cloudy → outdoor)
 - User can override recommendation via voice or dropdown
 
 **5. Modular Component Design**
+
 - **Backend**: Routes → Controllers → Services → Utils (weather, AI, conversation helpers)
 - **Frontend**: Components (presentational) + Hooks (behavior) + Utils (shared logic)
 - Each module has single responsibility; easy to test and extend
@@ -66,6 +75,7 @@ An intelligent AI-powered voice-first restaurant booking system that combines na
 ### Tech Stack
 
 **Backend:**
+
 - **Node.js 22 + Express 5.2** - RESTful API server
 - **MongoDB Atlas + Mongoose 9.0** - NoSQL database with schema validation
 - **Google Gemini AI** - `gemini-2.5-flash` model for NLP and conversation
@@ -73,6 +83,7 @@ An intelligent AI-powered voice-first restaurant booking system that combines na
 - **nanoid 5.0** - Collision-resistant short ID generation
 
 **Frontend:**
+
 - **React 18 + Vite 6** - Fast dev server and optimized builds
 - **Tailwind CSS 3.4** - Utility-first styling with responsive design
 - **Web Speech API** - Browser-native TTS (SpeechSynthesis) and STT (SpeechRecognition)
@@ -82,6 +93,7 @@ An intelligent AI-powered voice-first restaurant booking system that combines na
 ## 📂 Project Structure
 
 ### Backend Architecture
+
 ```
 backend/
 ├── index.js                        # Express server + MongoDB connection
@@ -106,12 +118,14 @@ backend/
 **Key Backend Modules:**
 
 - **conversationService.js**: Core conversation manager
+
   - `processConversationTurn()` - Main entry point for each user message
   - `extractBookingInfo()` - Uses Gemini to extract fields from conversation
   - `generateContextualResponse()` - Creates natural bot replies with anti-loop rules
   - In-memory conversation store (Map) indexed by sessionId
 
 - **weatherService.js**: Weather integration orchestrator
+
   - Validates 5-day booking window
   - Calls `fetchWeatherForecast()` and `findClosestForecast()`
   - Returns `{ weatherInfo, seatingRecommendation }`
@@ -122,6 +136,7 @@ backend/
   - Multi-layer date validation (past date + 5-day limit)
 
 ### Frontend Architecture
+
 ```
 frontend/
 ├── src/
@@ -144,25 +159,30 @@ frontend/
 **Key Frontend Modules:**
 
 - **VoiceBooking.jsx**: State machine and orchestration
+
   - Manages: `step`, `booking`, `conversation`, `isActive`, `weatherRecommendationGiven`
   - Handlers: `handleUserSpeech()`, `processWithGemini()`, `handleConfirmation()`
   - Flows: `startBooking()` → `fetchWeatherAndRespond()` → `saveBookingToServer()`
   - localStorage persistence for session continuity
 
 - **ConversationPane.jsx**: Presentational component
+
   - Props: `conversation`, `isSpeaking`, `isListening`, `endRef`
   - Renders message bubbles with auto-scroll
 
 - **VoiceControls.jsx**: Circular button dock
+
   - Props: event handlers for continue/start/speak/stop/cancel
   - Conditional rendering based on `showContinuePrompt`, `isActive`, `isListening`
   - Accessible with `title` and `aria-label`
 
 - **BookingForm.jsx**: Editable form fields
+
   - Props: `booking`, `onFieldChange`, `step`, `onConfirm`
   - Two-column date/time grid, dropdown for seating, textarea for special requests
 
 - **Hooks**: Encapsulate Web Speech API complexity
+
   - `useSpeechSynthesis`: Selects female voice, manages queue, pitch 1.2
   - `useSpeechRecognition`: maxAlternatives=3, error filtering, hasResult flag
 
@@ -170,15 +190,18 @@ frontend/
   - `steps.js`: Single source of truth for conversation steps
   - `voicePatterns.js`: Reusable regex for seating, changes, positive responses
   - `apiClient.js`: Centralized Axios with CORS config
+
 ## 🔄 Data Flow & Request Lifecycle
 
 ### Voice Booking Flow
 
 1. **User clicks "Start Voice Booking"**
+
    - Frontend: `startBooking()` → speaks greeting → starts listening
    - State: `step = ASK_NAME`, `isActive = true`
 
 2. **User speaks their name** (e.g., "John")
+
    - Frontend: `handleUserSpeech()` → adds to conversation → calls `processWithGemini()`
    - API Call: `POST /api/chat { sessionId, message: "John", bookingData: {...} }`
    - Backend: `conversationService.processConversationTurn()`
@@ -188,11 +211,13 @@ frontend/
    - Frontend: Updates `booking.customerName`, speaks response, continues
 
 3. **User provides remaining fields** (guests → date → time → cuisine → special requests)
+
    - Same flow repeats for each field
    - Backend tracks conversation history for context
    - Anti-loop protection prevents repeated questions
 
 4. **All fields complete → Weather fetch**
+
    - Frontend: `allFieldsComplete` check passes → `fetchWeatherAndRespond()`
    - API Call: `POST /api/chat { message: "Get weather for 2025-12-05 at 19:00", bookingData }`
    - Backend: `chat.js` route validates date (5-day window)
@@ -204,6 +229,7 @@ frontend/
    - Frontend: Speaks weather message + asks for seating confirmation
 
 5. **User confirms seating**
+
    - Voice: "outdoor" → `handleConfirmation()` → direct seating update
    - Moves to `CONFIRM_DETAILS` → reads full booking summary
 
@@ -220,17 +246,20 @@ frontend/
 ### Error Handling Strategy
 
 **Frontend:**
+
 - Speech recognition: Ignores no-speech/aborted errors; user clicks "Speak" to retry
 - API failures: Shows error message in conversation; allows manual field editing
 - Date validation: Rejects past dates and dates >5 days immediately; stays at ASK_DATE step
 
 **Backend:**
+
 - Date out of range: Returns 400 error from `chat.js` route before calling weather service
 - Weather API failure: Returns `{ weatherInfo: null, seatingRecommendation: "indoor" }`
 - Gemini extraction errors: Returns last known response; logs error
 - MongoDB errors: Returns 500 with error message; doesn't save partial data
 
 **Validation Layers:**
+
 1. Frontend: Client-side date/time checks in `processWithGemini()`
 2. Backend Route: Date validation in `chat.js` before weather fetch
 3. Backend Service: Additional checks in `weatherAPI.fetchWeatherForecast()`
@@ -239,6 +268,7 @@ frontend/
 ## 🚀 Setup & Installation
 
 ### Prerequisites
+
 - Node.js 18+ and npm
 - MongoDB Atlas account (free tier works)
 - OpenWeatherMap API key (free tier: 1000 calls/day)
@@ -263,6 +293,7 @@ npm install
 ### 2. Environment Configuration
 
 **Backend `.env`** (create in `backend/` directory):
+
 ```env
 # MongoDB Atlas connection string
 MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/restaurant-booking?retryWrites=true&w=majority
@@ -277,12 +308,14 @@ GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
 **Frontend `.env`** (create in `frontend/` directory):
+
 ```env
 # Backend server URL (change for production deployment)
 VITE_SERVER_URL=http://localhost:4000
 ```
 
 **Get API Keys:**
+
 - **MongoDB Atlas**: [mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas) → Create free cluster → Get connection string
 - **OpenWeatherMap**: [openweathermap.org/api](https://openweathermap.org/api) → Sign up → Get API key from dashboard
 - **Google Gemini**: [aistudio.google.com/apikey](https://aistudio.google.com/apikey) → Create API key
@@ -290,17 +323,21 @@ VITE_SERVER_URL=http://localhost:4000
 ### 3. Run Development Servers
 
 **Terminal 1 - Backend:**
+
 ```powershell
 cd backend
 npm run dev
 ```
+
 Server starts at `http://localhost:4000`
 
 **Terminal 2 - Frontend:**
+
 ```powershell
 cd frontend
 npm run dev
 ```
+
 App opens at `http://localhost:5173`
 
 ### 4. Test the System
@@ -323,6 +360,7 @@ App opens at `http://localhost:5173`
 ### Bookings
 
 **Create Booking**
+
 ```http
 POST /api/bookings
 Content-Type: application/json
@@ -353,18 +391,23 @@ GET /api/bookings/:id
 Supports both `bookingId` (nanoid) and MongoDB `_id`.
 
 **Delete Booking**
+
 ```http
 DELETE /api/bookings/:id
 ```
+
 Supports both `bookingId` (nanoid) and MongoDB `_id`.
 
 **Get All Bookings**
+
 ```http
 GET /api/bookings
 ```
+
 Returns array of all bookings sorted by creation date (newest first).
 
 **Health Check**
+
 ```http
 GET /health
 Response: { "status": "ok", "timestamp": "2025-12-04T12:00:00.000Z" }
@@ -373,6 +416,7 @@ Response: { "status": "ok", "timestamp": "2025-12-04T12:00:00.000Z" }
 ### Voice Conversation
 
 **Process Voice Turn**
+
 ```http
 POST /api/chat
 Content-Type: application/json
@@ -403,6 +447,7 @@ Response:
 ```
 
 **Weather Request** (triggered automatically when all fields complete)
+
 ```http
 POST /api/chat
 Content-Type: application/json
@@ -430,6 +475,7 @@ Response:
 ## 📋 Database Schema
 
 ### Booking Model
+
 ```javascript
 {
   bookingId: String,             // 6-char nanoid (e.g., "a1B9xZ")
@@ -455,6 +501,7 @@ Response:
 ```
 
 **Indexes:**
+
 - `bookingId`: Unique index for fast lookups
 - `createdAt`: Descending index for sorted queries
 
@@ -465,12 +512,14 @@ Response:
 The system uses a carefully crafted prompt for `extractBookingInfo()`:
 
 **Context Provided:**
+
 - Current booking data (what's already known)
 - Last 4 conversation messages
 - Pre-calculated dates (TODAY, TOMORROW, DAY_AFTER_TOMORROW)
 - Current time in IST
 
 **Extraction Rules:**
+
 1. **NAME**: Any name → `customerName` (e.g., "John" → "John")
 2. **GUESTS**: Any number → `numberOfGuests` (e.g., "4" → 4, "twelve" → 12)
 3. **DATE**: Relative dates converted (e.g., "tomorrow" → "2025-12-05"); rejects past dates and dates >5 days
@@ -480,6 +529,7 @@ The system uses a carefully crafted prompt for `extractBookingInfo()`:
 7. **SEATING**: Only extracts if explicitly mentioned (indoor/outdoor); never guesses
 
 **Anti-Loop Protection:**
+
 - Checks last assistant message
 - If just asked for X and user answered, moves to next field
 - Never repeats same question twice in a row
@@ -487,6 +537,7 @@ The system uses a carefully crafted prompt for `extractBookingInfo()`:
 ### Weather-Based Seating Logic
 
 **Rule Priority** (in `seatingRecommendation.js`):
+
 1. Rain/snow/thunderstorm → Indoor (highest priority)
 2. Rain probability >40% → Indoor
 3. Temperature <10°C or >38°C → Indoor
@@ -494,6 +545,7 @@ The system uses a carefully crafted prompt for `extractBookingInfo()`:
 5. Default fallback → Indoor (safe choice)
 
 **Time Slot Matching:**
+
 - OpenWeatherMap provides 3-hour intervals
 - System finds forecast entry with minimum time difference
 - Example: User books 19:00 → matches 18:00 or 21:00 slot (whichever is closer)
@@ -527,6 +579,7 @@ IDLE (ready for next booking)
 ```
 
 **Modification Handling:**
+
 - User says "change X" at CONFIRM_DETAILS → returns to ASK_NAME
 - Seating changes handled instantly without conversation re-entry
 - Date/time changes reset weather recommendation
@@ -534,28 +587,33 @@ IDLE (ready for next booking)
 ## 🎯 Key Design Decisions
 
 ### Why Voice-First?
+
 - Hands-free operation while browsing menu/website
 - Faster than typing on mobile
 - Accessible for users with visual impairments or typing difficulties
 
 ### Why 5-Day Booking Window?
+
 - OpenWeatherMap free tier provides 5-day forecast
 - Restaurant bookings beyond 5 days are uncommon for casual dining
 - Shorter window ensures more accurate weather predictions
 
 ### Why Circular Buttons at Bottom?
+
 - Consistent with mobile UI patterns (floating action buttons)
 - Always accessible regardless of scroll position
 - Large touch targets for accessibility
 - Clear visual hierarchy: conversation above, controls below
 
 ### Why Modular Components?
+
 - **Maintainability**: Easy to locate and update specific UI sections
 - **Testability**: Components can be tested in isolation
 - **Reusability**: `VoiceControls` and `BookingForm` can be used in other contexts
 - **Readability**: Each file <200 lines, single responsibility
 
 ### Why In-Memory Conversation Store?
+
 - Fast lookups (Map vs database query)
 - Temporary data (conversations don't need persistence)
 - Simplified deployment (no Redis needed for demo/prototype)
@@ -564,6 +622,7 @@ IDLE (ready for next booking)
 ## 🌍 Supported Cities & Weather
 
 **Preconfigured Cities:**
+
 - New Delhi, Mumbai, Bangalore, Kolkata, Chennai, Hyderabad, Pune, Ahmedabad
 
 **To Add More Cities:**
@@ -572,6 +631,7 @@ Edit `backend/utils/weatherAPI.js` and add coordinates to `CITY_COORDS` object.
 ## ⚠️ Known Limitations
 
 ### Speech Recognition
+
 - **Browser Compatibility**: Chrome/Edge recommended (best Web Speech API support)
 - **Safari**: Limited speech recognition accuracy
 - **Firefox**: Requires manual speech API enablement in `about:config`
@@ -579,23 +639,27 @@ Edit `backend/utils/weatherAPI.js` and add coordinates to `CITY_COORDS` object.
 - **Background Noise**: Can affect accuracy (use in quiet environment)
 
 ### Weather Forecasting
+
 - **5-Day Window**: Limited by OpenWeatherMap free tier
 - **3-Hour Intervals**: Not minute-accurate, finds nearest forecast slot
 - **Forecast Changes**: Weather can change; recommendation based on forecast at booking time
 - **City Coverage**: Only major Indian cities preconfigured (expandable via config)
 
 ### Conversation AI
+
 - **Ambiguity**: Gemini may misinterpret unclear inputs (e.g., "next week Monday")
 - **Anti-Loop Patterns**: Edge cases possible in modification flow
 - **In-Memory State**: Conversation history cleared on server restart
 - **Single Booking**: No support for multiple concurrent bookings per session
 
 ### API Rate Limits
+
 - **Gemini Free Tier**: 15 requests/minute
 - **OpenWeather Free Tier**: 60 calls/minute, 1000 calls/day
 - **No Throttling**: Production requires rate limiting implementation
 
 ### Production Readiness
+
 - **No Authentication**: Public API endpoints (security risk)
 - **No Conflict Detection**: Double-booking possible
 - **No Notifications**: No email/SMS confirmations
@@ -606,6 +670,7 @@ Edit `backend/utils/weatherAPI.js` and add coordinates to `CITY_COORDS` object.
 ## 🛠️ Troubleshooting
 
 ### Microphone Not Working
+
 1. Check browser permissions: **Settings → Privacy → Microphone**
 2. Ensure no other apps are using microphone (Zoom, Discord, etc.)
 3. Try refreshing page and allowing permissions again
@@ -613,6 +678,7 @@ Edit `backend/utils/weatherAPI.js` and add coordinates to `CITY_COORDS` object.
 5. Use **Chrome/Edge** (best Web Speech API support)
 
 ### Speech Not Recognized
+
 1. Speak clearly and slowly
 2. Reduce background noise
 3. Check internet connection
@@ -620,6 +686,7 @@ Edit `backend/utils/weatherAPI.js` and add coordinates to `CITY_COORDS` object.
 5. Use manual input as fallback (edit form fields directly)
 
 ### Weather Data Unavailable
+
 1. Verify `OPENWEATHER_API_KEY` in backend `.env` is valid
 2. Check internet connection
 3. Ensure booking date is within 5-day window
@@ -627,6 +694,7 @@ Edit `backend/utils/weatherAPI.js` and add coordinates to `CITY_COORDS` object.
 5. Check OpenWeather API quota (1000 calls/day free tier)
 
 ### Cannot Connect to Backend
+
 1. Verify backend server is running: `cd backend && npm run dev`
 2. Check `VITE_SERVER_URL=http://localhost:4000` in frontend `.env`
 3. Ensure port 4000 is not blocked by firewall
@@ -634,6 +702,7 @@ Edit `backend/utils/weatherAPI.js` and add coordinates to `CITY_COORDS` object.
 5. Verify backend console shows no errors
 
 ### Booking Not Saving
+
 1. Verify `MONGODB_URI` in backend `.env` is correct
 2. Check MongoDB Atlas cluster is active (not paused)
 3. Ensure all required fields are filled
@@ -641,12 +710,14 @@ Edit `backend/utils/weatherAPI.js` and add coordinates to `CITY_COORDS` object.
 5. Test MongoDB connection: Run `backend/test-weather.js`
 
 ### Bot Repeats Same Question
+
 1. Speak the answer more clearly
 2. Check conversation history (left pane) for context
 3. Try manual input instead
 4. Click "Start New Booking" if stuck in loop
 
 ### Build Errors
+
 ```powershell
 # Clear node_modules and reinstall
 Remove-Item -Recurse node_modules
@@ -662,6 +733,7 @@ npm install
 ## 🔐 Security Considerations
 
 ### Current Implementation (Development Only)
+
 ⚠️ **NOT PRODUCTION-READY** - This is a portfolio/demo project
 
 - No authentication or user accounts
@@ -674,6 +746,7 @@ npm install
 ### For Production Deployment
 
 **Required Implementations:**
+
 1. **Authentication**: JWT or OAuth2 for user sessions
 2. **Rate Limiting**: Express rate limiter to prevent abuse
 3. **Input Validation**: Use express-validator or Joi schemas
@@ -685,11 +758,13 @@ npm install
 ## 🎓 Learning Resources
 
 ### APIs Used
+
 - [OpenWeatherMap 5-Day Forecast API](https://openweathermap.org/forecast5)
 - [Google Gemini AI Documentation](https://ai.google.dev/gemini-api/docs)
 - [Web Speech API (MDN)](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API)
 
 ### Frameworks & Libraries
+
 - [Express.js Guide](https://expressjs.com/)
 - [React Documentation](https://react.dev/)
 - [Mongoose Schema Reference](https://mongoosejs.com/docs/guide.html)
@@ -697,6 +772,7 @@ npm install
 - [Vite Guide](https://vitejs.dev/guide/)
 
 ### Tutorials
+
 - [Building Conversational AI with Gemini](https://ai.google.dev/gemini-api/docs/text-generation)
 - [Web Speech API Tutorial](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API/Using_the_Web_Speech_API)
 - [MongoDB Atlas Setup](https://www.mongodb.com/docs/atlas/getting-started/)
@@ -704,6 +780,7 @@ npm install
 ## 🚀 Future Enhancements
 
 ### Phase 1: Core Features (MVP)
+
 - [ ] **User Authentication**: Email/phone login with JWT
 - [ ] **Email Confirmations**: Booking receipt via SendGrid
 - [ ] **SMS Notifications**: Reminders via Twilio (1 hour before)
@@ -711,6 +788,7 @@ npm install
 - [ ] **Availability Calendar**: Show available slots, prevent double-booking
 
 ### Phase 2: Advanced Features
+
 - [ ] **Multi-Language Support**: Hindi, Spanish, French, German (i18n)
 - [ ] **Payment Integration**: Accept deposits via Stripe/Razorpay
 - [ ] **Table Management**: Assign specific table numbers, floor plans
@@ -719,6 +797,7 @@ npm install
 - [ ] **Review System**: Post-dining feedback collection
 
 ### Phase 3: Business Features
+
 - [ ] **Multi-Restaurant Tenant System**: SaaS model with subscriptions
 - [ ] **Admin Dashboard**: Analytics, revenue tracking, heatmaps
 - [ ] **Staff Portal**: Hostess view for seating assignments, kitchen notifications
@@ -726,6 +805,7 @@ npm install
 - [ ] **Inventory Management**: Track table turnover, occupancy rates
 
 ### Phase 4: Scalability
+
 - [ ] **Redis Session Store**: Replace in-memory Map for multi-server support
 - [ ] **WebSocket Real-Time**: Live table status updates
 - [ ] **Load Balancing**: Horizontal scaling for production
@@ -736,6 +816,7 @@ npm install
 Contributions welcome! Please follow these guidelines:
 
 ### How to Contribute
+
 1. **Fork** the repository
 2. **Create a branch**: `git checkout -b feature/amazing-feature`
 3. **Commit changes**: `git commit -m 'Add amazing feature'`
@@ -743,6 +824,7 @@ Contributions welcome! Please follow these guidelines:
 5. **Open a Pull Request**
 
 ### Code Style
+
 - Use **ES6+ syntax** (arrow functions, destructuring, async/await)
 - Follow existing patterns (modular, small functions <50 lines)
 - Add comments for complex logic
@@ -750,6 +832,7 @@ Contributions welcome! Please follow these guidelines:
 - Test locally before committing
 
 ### Pull Request Checklist
+
 - [ ] Code follows project structure (services, controllers, utils)
 - [ ] No console.log statements (use proper logging)
 - [ ] All tests pass (if applicable)

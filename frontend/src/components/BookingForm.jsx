@@ -1,13 +1,30 @@
-import { FaEdit, FaUsers, FaCalendar, FaClock, FaUtensils, FaSun, FaMoon, FaCheck } from "react-icons/fa";
+import {
+  FaEdit,
+  FaUsers,
+  FaCalendar,
+  FaClock,
+  FaUtensils,
+  FaSun,
+  FaMoon,
+  FaCheck,
+} from "react-icons/fa";
 import { STEPS } from "../utils/steps";
 
-export default function BookingForm({ isActive, booking, onFieldChange, step, onConfirm }) {
+export default function BookingForm({
+  isActive,
+  booking,
+  onFieldChange,
+  step,
+  onConfirm,
+}) {
   return (
     <div className="bg-white rounded-3xl p-8">
       <div className="flex items-center justify-between p-2 mb-6">
         <h2 className="text-xl font-semibold text-gray-800">Booking Details</h2>
         {isActive && (
-          <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">Active</span>
+          <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+            Active
+          </span>
         )}
       </div>
 
@@ -81,7 +98,9 @@ export default function BookingForm({ isActive, booking, onFieldChange, step, on
             <input
               type="text"
               value={booking.cuisinePreference}
-              onChange={(e) => onFieldChange("cuisinePreference", e.target.value)}
+              onChange={(e) =>
+                onFieldChange("cuisinePreference", e.target.value)
+              }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="e.g., Italian, Chinese"
             />
@@ -99,7 +118,9 @@ export default function BookingForm({ isActive, booking, onFieldChange, step, on
             </label>
             <select
               value={booking.seatingPreference}
-              onChange={(e) => onFieldChange("seatingPreference", e.target.value)}
+              onChange={(e) =>
+                onFieldChange("seatingPreference", e.target.value)
+              }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Auto (based on weather)</option>

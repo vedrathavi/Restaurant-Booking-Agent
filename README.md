@@ -37,7 +37,7 @@ An intelligent AI-powered voice-first restaurant booking system that combines na
 
 ## 🏗️ Architecture & Approach
 
-### Design Philosophy
+
 
 **1. Voice-First with Manual Fallback**
 
@@ -771,11 +771,6 @@ npm install
 - [Tailwind CSS Docs](https://tailwindcss.com/docs)
 - [Vite Guide](https://vitejs.dev/guide/)
 
-### Tutorials
-
-- [Building Conversational AI with Gemini](https://ai.google.dev/gemini-api/docs/text-generation)
-- [Web Speech API Tutorial](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API/Using_the_Web_Speech_API)
-- [MongoDB Atlas Setup](https://www.mongodb.com/docs/atlas/getting-started/)
 
 ## 🚀 Future Enhancements
 
@@ -868,7 +863,7 @@ SOFTWARE.
 - **Issues**: Report bugs or request features via [GitHub Issues](https://github.com/vedrathavi/Restaurant-Booking-Agent/issues)
 - **Repository**: [github.com/vedrathavi/Restaurant-Booking-Agent](https://github.com/vedrathavi/Restaurant-Booking-Agent)
 - **Developer**: Ved Rathavi
-- **Portfolio**: [vedrathavi.dev](https://vedrathavi.dev) _(if applicable)_
+
 
 ---
 

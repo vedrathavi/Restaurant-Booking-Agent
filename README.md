@@ -4,6 +4,9 @@ AI-powered restaurant booking system with intelligent voice chat, weather-aware 
 
 ## Features
 
+- 🎤 **Voice Booking System** - Complete hands-free booking with Web Speech API (TTS + STT)
+- 💬 **Real-time Conversation Display** - See both your words and bot responses as subtitles
+- ✏️ **Manual Edit Mode** - Edit any booking field if voice recognition fails
 - 🤖 **Multi-turn Voice Conversations** - Natural dialogue for booking tables
 - 🌤️ **Weather Integration** - Automatic seating recommendations based on forecast
 - 🗣️ **Gemini AI** - Natural language understanding and conversational responses
@@ -25,6 +28,8 @@ AI-powered restaurant booking system with intelligent voice chat, weather-aware 
 
 - React + Vite
 - Tailwind CSS
+- Web Speech API (SpeechSynthesis + SpeechRecognition)
+- Axios
 
 ## Project Structure
 
@@ -47,7 +52,17 @@ backend/
     └── seatingRecommendation.js # Rule-based seating logic
 
 frontend/
-└── (React app)
+├── src/
+│   ├── components/
+│   │   └── VoiceBooking.jsx       # Voice booking UI with conversation
+│   ├── hooks/
+│   │   ├── useSpeechSynthesis.js  # Text-to-Speech hook
+│   │   └── useSpeechRecognition.js # Speech-to-Text hook
+│   ├── utils/
+│   │   ├── apiClient.js           # Axios instance
+│   │   └── constants.js           # HOST config
+│   └── config/
+│       └── constants.js           # API endpoints
 ```
 
 ## Setup
@@ -61,6 +76,12 @@ MONGO_URI=your_mongodb_atlas_connection_string
 PORT=4000
 WEATHER_API_KEY=your_openweather_api_key
 GEMINI_API_KEY=your_gemini_api_key
+```
+
+Create `frontend/.env`:
+
+```env
+VITE_SERVER_URL=http://localhost:4000
 ```
 
 **Get API Keys:**
@@ -237,6 +258,39 @@ Expand in `backend/utils/weatherAPI.js`.
 - 60 calls/minute
 - 5-day forecast only
 
+## Voice Booking UI
+
+### Features
+
+1. **Real-time Conversation Display**
+   - Chat-style interface showing both user and bot messages
+   - Auto-scrolling conversation history
+   - Color-coded messages (blue for user, gray for bot, red for errors)
+
+2. **Voice Status Indicators**
+   - 🔊 Speaking indicator when bot is talking
+   - 🎤 Listening indicator when microphone is active
+
+3. **Manual Edit Mode**
+   - All booking fields are editable via form inputs
+   - Date and time pickers for easy selection
+   - Dropdown for seating preference
+   - Edit anytime during the conversation
+
+4. **Conversation Flow**
+   - ASK_NAME → ASK_GUESTS → ASK_DATE → ASK_TIME → ASK_CUISINE → ASK_SPECIAL_REQUEST → FETCH_WEATHER → CONFIRM_DETAILS → SAVE_BOOKING
+
+5. **Browser Support**
+   - Chrome/Edge (recommended) - Full Web Speech API support
+   - Firefox - Limited support
+   - Safari - Requires webkit prefix
+
+### Tips
+
+- **Voice Recognition Issues?** Use the "Speak Again" button or edit fields manually
+- **Better Recognition:** Speak clearly and pause between words
+- **Privacy:** Microphone access required, works on localhost or HTTPS only
+
 ## Development
 
 **Run with logs:**
@@ -250,7 +304,7 @@ npm run dev
 **Check packages:**
 
 ```powershell
-npm list @google/genai mongoose express nanoid
+npm list @google/genai mongoose express nanoid axios
 ```
 
 ## License

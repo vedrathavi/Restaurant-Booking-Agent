@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 import bookingsRouter from "./routes/bookings.js";
+import chatRouter from "./routes/chat.js";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ async function start() {
     });
     console.log("Connected to MongoDB");
     app.use("/api/bookings", bookingsRouter);
+    app.use("/api/chat", chatRouter);
       
 
     app.listen(PORT, () => {

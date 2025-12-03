@@ -20,6 +20,22 @@ export async function getWeatherAndRecommendation(
   city = "New Delhi"
 ) {
   try {
+    // Validate date range before fetching (5-day limit)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const bookingDateObj = new Date(bookingDate + 'T00:00:00');
+    const maxDate = new Date(today);
+    maxDate.setDate(maxDate.getDate() + 5);
+    
+    if (bookingDateObj > maxDate) {
+      console.warn(`Date ${bookingDate} exceeds 5-day forecast window`);
+      return {
+        weatherInfo: null,
+        seatingRecommendation: "indoor",
+        error: "Weather data only available for next 5 days"
+      };
+    }
+    
     // 1. Fetch forecast from OpenWeatherMap
     const apiResponse = await fetchWeatherForecast(city, bookingDate);
 

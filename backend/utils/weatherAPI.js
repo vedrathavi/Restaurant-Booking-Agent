@@ -26,6 +26,21 @@ export async function fetchWeatherForecast(city = DEFAULT_CITY, bookingDate) {
     throw new Error("WEATHER_API_KEY not set in environment");
   }
 
+  // Validate booking date is within 5-day forecast window
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const bookingDateObj = new Date(bookingDate + 'T00:00:00');
+  const maxDate = new Date(today);
+  maxDate.setDate(maxDate.getDate() + 5);
+  
+  if (bookingDateObj < today) {
+    throw new Error(`Cannot get weather for past date: ${bookingDate}`);
+  }
+  
+  if (bookingDateObj > maxDate) {
+    throw new Error(`Weather forecast only available for next 5 days. Requested: ${bookingDate}, Max: ${maxDate.toISOString().split('T')[0]}`);
+  }
+
   // Get coordinates for city (case-insensitive lookup)
   const cityLower = city.toLowerCase();
   const coords = CITY_COORDS[cityLower] || {
@@ -49,10 +64,11 @@ export async function fetchWeatherForecast(city = DEFAULT_CITY, bookingDate) {
 
 export function findClosestForecast(apiResponse, bookingDate, bookingTime) {
   // bookingDate: "YYYY-MM-DD", bookingTime: "HH:MM"
+  // Note: This function assumes bookingDate is within 5-day forecast window (validated upstream)
   const targetDt = new Date(`${bookingDate}T${bookingTime}:00`);
   const targetEpoch = Math.floor(targetDt.getTime() / 1000);
 
-  // 5-day forecast API returns 'list' with 3-hour intervals
+  // 5-day forecast API returns 'list' with 3-hour intervals (max ~40 data points)
   const list = apiResponse.list || [];
   let closest = null;
   let minDiff = Infinity;

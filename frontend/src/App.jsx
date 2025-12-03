@@ -1,10 +1,9 @@
-import React from 'react'
-import './App.css'
+import React from "react";
+import VoiceBooking from "./components/VoiceBooking";
+import "./App.css";
 
 function App() {
-  
-
-  return (<div className='bg-amber-800 h-screen'></div>)
+  return <VoiceBooking />;
 }
 
-export default App
+export default App;

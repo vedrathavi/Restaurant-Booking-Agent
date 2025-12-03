@@ -1,80 +1,50 @@
-# 🍽️ Restaurant Booking Agent
+# Restaurant Booking Agent
 
-An intelligent AI-powered voice-first restaurant booking system that combines natural language processing, real-time weather integration, and conversational AI to create a seamless reservation experience. The system features hands-free voice booking with live conversation display, weather-aware seating recommendations, and a clean modular architecture.
+This project is a voice-first restaurant booking system. Users speak naturally to make a reservation; the app extracts the key details (name, guests, date, time, cuisine, requests), checks weather to suggest indoor/outdoor seating, confirms the summary, and saves the booking. The UI always offers a manual form as a fallback so the flow is reliable on any device.
 
-## ✨ Key Features
+## Key Features
 
-### Voice & Conversation
+- Voice booking using the Web Speech API (TTS + STT)
+- Real-time conversation view for transparency
+- Weather-aware indoor/outdoor recommendation (5-day forecast)
+- Hybrid input: voice plus always-editable form fields
+- Local session resume after refresh
+- Modular code: components, hooks, services, utils
 
-- 🎤 **Hands-Free Voice Booking** - Complete booking flow using Web Speech API (TTS + STT)
-- 💬 **Real-Time Conversation UI** - Live display of user speech and bot responses with message bubbles
-- 🔄 **Session Persistence** - Resume interrupted bookings automatically via localStorage
-- 🎯 **Smart Intent Recognition** - Natural language understanding for seating changes, modifications, and confirmations
-- 🗣️ **Natural Responses** - Gemini AI generates contextual, casual, and human-like replies
+## Architecture & Approach
 
-### Intelligence & Automation
+The system is built around a simple state machine and clear module boundaries.
 
-- 🌤️ **Weather-Aware Seating** - Fetches 5-day forecast from OpenWeatherMap and recommends indoor/outdoor seating
-- 📅 **Smart Date Parsing** - Understands "today", "tomorrow", "day after tomorrow" with automatic validation
-- ⏰ **Time Zone Support** - IST (Indian Standard Time) for date/time calculations and validations
-- 🚫 **Booking Window Enforcement** - Restricts bookings to next 5 days (weather API limitation)
-- ✅ **Multi-Layer Validation** - Date/time validation across frontend, backend routes, and services
+1. Voice-first, form-always-available
 
-### User Experience
+- Users speak; the assistant extracts values and updates the form.
+- Users can edit any field at any time; voice is optional.
 
-- 📱 **Responsive Two-Column Layout** - Voice assistant on left, booking form on right
-- 🎨 **Circular Control Buttons** - Fixed bottom-center dock with accessible icon-only controls
-- ✏️ **Hybrid Input** - Voice + manual editing; users can correct any field in the form
-- 🔁 **Continue or Restart** - Smart prompt when returning to incomplete bookings
-- 🎭 **Progressive Form Display** - Fields update in real-time as conversation proceeds
+2. State machine (single question at a time)
 
-### Technical Excellence
+- Steps: IDLE → ASK_NAME → ASK_GUESTS → ASK_DATE → ASK_TIME → ASK_CUISINE → ASK_SPECIAL_REQUEST → FETCH_WEATHER → CONFIRM_DETAILS → SAVE_BOOKING → COMPLETE.
+- We only advance when the current field is valid. Optional fields come last.
 
-- 🧩 **Modular Architecture** - Clean separation: components, hooks, utils, services
-- 🔧 **Reusable Utilities** - Shared patterns for voice intents, steps, and validation helpers
-- 🔐 **Error Handling** - Graceful fallbacks for speech recognition, API failures, and network issues
-- 🆔 **Unique Booking IDs** - Short 6-character IDs via nanoid for easy reference
+3. Context management and extraction
 
-## 🏗️ Architecture & Approach
+- Backend stores short conversation history by `sessionId`.
+- Gemini extracts incremental updates (only fields present in the latest user turn).
+- Anti-loop rules: never repeat the same question if the user answered; ask again only when input is invalid (e.g., past date).
 
+4. Weather-driven seating
 
+- OpenWeatherMap 5-day/3-hour forecast is matched to the requested date/time.
+- Rules prefer indoor for rain/extremes; outdoor for pleasant conditions.
+- Users can override seating by voice or select in the form.
 
-**1. Voice-First with Manual Fallback**
+5. Modular code layout
 
-- Designed for hands-free operation but never locks users into voice-only interaction
-- Every field can be edited manually in the form while voice conversation continues
-- Speech recognition errors don't block progress—users can type corrections
-
-**2. Progressive Conversation Flow**
-
-- Step-based state machine (IDLE → ASK_NAME → ASK_GUESTS → ASK_DATE → ASK_TIME → ASK_CUISINE → ASK_SPECIAL_REQUEST → FETCH_WEATHER → CONFIRM_DETAILS → SAVE_BOOKING → COMPLETE)
-- Bot asks one question at a time; moves forward only when field is filled
-- Optional fields (cuisine, special requests) asked after required fields
-- Weather fetch happens automatically after all fields collected
-
-**3. Intelligent Context Management**
-
-- Backend maintains conversation history per session ID
-- Gemini AI extracts booking data incrementally from multi-turn dialogue
-- Anti-loop protection: bot never repeats the same question twice in a row
-- Modification detection: user can change any field mid-conversation ("change date to tomorrow")
-
-**4. Weather Integration**
-
-- Fetches real 5-day forecast from OpenWeatherMap (3-hour intervals)
-- Finds closest time slot to booking date/time
-- Applies seating rules: temperature (18-30°C outdoor), rain probability (<40% outdoor), weather condition (clear/cloudy → outdoor)
-- User can override recommendation via voice or dropdown
-
-**5. Modular Component Design**
-
-- **Backend**: Routes → Controllers → Services → Utils (weather, AI, conversation helpers)
-- **Frontend**: Components (presentational) + Hooks (behavior) + Utils (shared logic)
-- Each module has single responsibility; easy to test and extend
+- Backend: routes → controllers → services → utils.
+- Frontend: components (UI), hooks (speech), utils (steps, patterns), config.
 
 ### Tech Stack
 
-**Backend:**
+Backend:
 
 - **Node.js 22 + Express 5.2** - RESTful API server
 - **MongoDB Atlas + Mongoose 9.0** - NoSQL database with schema validation
@@ -82,7 +52,7 @@ An intelligent AI-powered voice-first restaurant booking system that combines na
 - **OpenWeatherMap API** - 5-day/3-hour forecast (free tier)
 - **nanoid 5.0** - Collision-resistant short ID generation
 
-**Frontend:**
+Frontend:
 
 - **React 18 + Vite 6** - Fast dev server and optimized builds
 - **Tailwind CSS 3.4** - Utility-first styling with responsive design
@@ -191,57 +161,42 @@ frontend/
   - `voicePatterns.js`: Reusable regex for seating, changes, positive responses
   - `apiClient.js`: Centralized Axios with CORS config
 
-## 🔄 Data Flow & Request Lifecycle
+## Flow & Request Lifecycle
 
 ### Voice Booking Flow
 
-1. **User clicks "Start Voice Booking"**
+1. Start
 
-   - Frontend: `startBooking()` → speaks greeting → starts listening
-   - State: `step = ASK_NAME`, `isActive = true`
+- User clicks Start. Frontend speaks a greeting and begins listening.
+- Step moves to ASK_NAME.
 
-2. **User speaks their name** (e.g., "John")
+2. Per-turn extraction
 
-   - Frontend: `handleUserSpeech()` → adds to conversation → calls `processWithGemini()`
-   - API Call: `POST /api/chat { sessionId, message: "John", bookingData: {...} }`
-   - Backend: `conversationService.processConversationTurn()`
-     - Gemini extracts: `{ customerName: "John" }`
-     - Checks missing fields → generates response: "Awesome! How many guests?"
-     - Returns: `{ response, bookingData: { customerName: "John" }, isComplete: false }`
-   - Frontend: Updates `booking.customerName`, speaks response, continues
+- Frontend calls `/api/chat` with the transcript and current form data.
+- Backend uses Gemini to return only the fields found in that turn (e.g., `customerName`).
+- UI updates the form, speaks one short follow-up question.
 
-3. **User provides remaining fields** (guests → date → time → cuisine → special requests)
+3. Continue until required fields complete
 
-   - Same flow repeats for each field
-   - Backend tracks conversation history for context
-   - Anti-loop protection prevents repeated questions
+- Guests → Date → Time → then optional fields (Cuisine, Special Requests).
+- Anti-loop rules ensure we move forward when answers are valid.
 
-4. **All fields complete → Weather fetch**
+4. Weather and seating
 
-   - Frontend: `allFieldsComplete` check passes → `fetchWeatherAndRespond()`
-   - API Call: `POST /api/chat { message: "Get weather for 2025-12-05 at 19:00", bookingData }`
-   - Backend: `chat.js` route validates date (5-day window)
-     - Calls `weatherService.getWeatherAndRecommendation()`
-     - `weatherAPI.fetchWeatherForecast()` → OpenWeatherMap API
-     - `findClosestForecast()` → matches 19:00 to nearest 3-hour slot
-     - `recommendSeating()` → applies rules based on temp/condition/rain
-   - Returns: `{ weatherInfo: {...}, seatingRecommendation: "outdoor" }`
-   - Frontend: Speaks weather message + asks for seating confirmation
+- When required fields exist, frontend requests weather.
+- Backend validates date (today → +5 days), fetches forecast, applies seating rules, and returns a recommendation.
+- Frontend speaks the recommendation and asks for seating confirmation.
 
-5. **User confirms seating**
+5. Seating confirmation
 
-   - Voice: "outdoor" → `handleConfirmation()` → direct seating update
-   - Moves to `CONFIRM_DETAILS` → reads full booking summary
+- User can say "indoor" or "outdoor" at any time in confirmation.
+- We update seating instantly and proceed to full summary.
 
-6. **User confirms booking**
-   - Voice: "yes" → `moveTo(SAVE_BOOKING)`
-   - API Call: `POST /api/bookings { customerName, numberOfGuests, ... }`
-   - Backend: `bookingsController.createBooking()`
-     - Validates all fields
-     - Generates `bookingId` via `nanoid(6)`
-     - Saves to MongoDB with embedded weatherInfo
-   - Returns: `{ bookingId, message }`
-   - Frontend: Speaks booking ID letter-by-letter → auto-resets after 5s
+6. Save
+
+- User says "yes". Frontend sends the form to `/api/bookings`.
+- Backend validates and saves the booking with a 6-char `bookingId`.
+- Frontend speaks the ID and resets after a short delay.
 
 ### Error Handling Strategy
 
@@ -584,157 +539,40 @@ IDLE (ready for next booking)
 - Seating changes handled instantly without conversation re-entry
 - Date/time changes reset weather recommendation
 
-## 🎯 Key Design Decisions
+## Design Rationale (Short)
 
-### Why Voice-First?
+- Voice-first with form fallback: fastest on mobile, always editable.
+- 5-day window: matches OpenWeatherMap free tier; keeps forecasts reliable.
+- Bottom controls: fixed, reachable, large touch targets.
+- Modular components: maintainable, testable, reusable.
+- In-memory store: simple for demo; use Redis/Mongo in production.
 
-- Hands-free operation while browsing menu/website
-- Faster than typing on mobile
-- Accessible for users with visual impairments or typing difficulties
-
-### Why 5-Day Booking Window?
-
-- OpenWeatherMap free tier provides 5-day forecast
-- Restaurant bookings beyond 5 days are uncommon for casual dining
-- Shorter window ensures more accurate weather predictions
-
-### Why Circular Buttons at Bottom?
-
-- Consistent with mobile UI patterns (floating action buttons)
-- Always accessible regardless of scroll position
-- Large touch targets for accessibility
-- Clear visual hierarchy: conversation above, controls below
-
-### Why Modular Components?
-
-- **Maintainability**: Easy to locate and update specific UI sections
-- **Testability**: Components can be tested in isolation
-- **Reusability**: `VoiceControls` and `BookingForm` can be used in other contexts
-- **Readability**: Each file <200 lines, single responsibility
-
-### Why In-Memory Conversation Store?
-
-- Fast lookups (Map vs database query)
-- Temporary data (conversations don't need persistence)
-- Simplified deployment (no Redis needed for demo/prototype)
-- **Production Note**: Replace with Redis or MongoDB for multi-server deployments
-
-## 🌍 Supported Cities & Weather
-
-**Preconfigured Cities:**
+## Supported Cities
 
 - New Delhi, Mumbai, Bangalore, Kolkata, Chennai, Hyderabad, Pune, Ahmedabad
+- Add more in `backend/utils/weatherAPI.js` → `CITY_COORDS`.
 
-**To Add More Cities:**
-Edit `backend/utils/weatherAPI.js` and add coordinates to `CITY_COORDS` object.
+## Known Limitations (Short)
 
-## ⚠️ Known Limitations
+- Speech: best in Chrome/Edge; noise affects accuracy.
+- Weather: 5-day window; 3-hour slots; forecast may change.
+- AI: ambiguous phrases can misinterpret; anti-loop covers common cases.
+- Rate limits: Gemini and OpenWeather free tiers apply.
+- Production: no auth, conflict checks, or notifications yet; single-server state.
 
-### Speech Recognition
+## Troubleshooting (Quick)
 
-- **Browser Compatibility**: Chrome/Edge recommended (best Web Speech API support)
-- **Safari**: Limited speech recognition accuracy
-- **Firefox**: Requires manual speech API enablement in `about:config`
-- **Network Dependency**: Requires stable internet for STT
-- **Background Noise**: Can affect accuracy (use in quiet environment)
-
-### Weather Forecasting
-
-- **5-Day Window**: Limited by OpenWeatherMap free tier
-- **3-Hour Intervals**: Not minute-accurate, finds nearest forecast slot
-- **Forecast Changes**: Weather can change; recommendation based on forecast at booking time
-- **City Coverage**: Only major Indian cities preconfigured (expandable via config)
-
-### Conversation AI
-
-- **Ambiguity**: Gemini may misinterpret unclear inputs (e.g., "next week Monday")
-- **Anti-Loop Patterns**: Edge cases possible in modification flow
-- **In-Memory State**: Conversation history cleared on server restart
-- **Single Booking**: No support for multiple concurrent bookings per session
-
-### API Rate Limits
-
-- **Gemini Free Tier**: 15 requests/minute
-- **OpenWeather Free Tier**: 60 calls/minute, 1000 calls/day
-- **No Throttling**: Production requires rate limiting implementation
-
-### Production Readiness
-
-- **No Authentication**: Public API endpoints (security risk)
-- **No Conflict Detection**: Double-booking possible
-- **No Notifications**: No email/SMS confirmations
-- **No Payment**: Booking only, no deposits or payments
-- **No Cancellation**: Cannot modify/cancel after booking saved
-- **Single Server**: In-memory store doesn't scale horizontally
-
-## 🛠️ Troubleshooting
-
-### Microphone Not Working
-
-1. Check browser permissions: **Settings → Privacy → Microphone**
-2. Ensure no other apps are using microphone (Zoom, Discord, etc.)
-3. Try refreshing page and allowing permissions again
-4. Test microphone in system settings
-5. Use **Chrome/Edge** (best Web Speech API support)
-
-### Speech Not Recognized
-
-1. Speak clearly and slowly
-2. Reduce background noise
-3. Check internet connection
-4. Click "Speak Again" button
-5. Use manual input as fallback (edit form fields directly)
-
-### Weather Data Unavailable
-
-1. Verify `OPENWEATHER_API_KEY` in backend `.env` is valid
-2. Check internet connection
-3. Ensure booking date is within 5-day window
-4. Verify city is in supported list (`backend/utils/weatherAPI.js`)
-5. Check OpenWeather API quota (1000 calls/day free tier)
-
-### Cannot Connect to Backend
-
-1. Verify backend server is running: `cd backend && npm run dev`
-2. Check `VITE_SERVER_URL=http://localhost:4000` in frontend `.env`
-3. Ensure port 4000 is not blocked by firewall
-4. Check CORS settings in `backend/index.js`
-5. Verify backend console shows no errors
-
-### Booking Not Saving
-
-1. Verify `MONGODB_URI` in backend `.env` is correct
-2. Check MongoDB Atlas cluster is active (not paused)
-3. Ensure all required fields are filled
-4. Check backend console for error messages
-5. Test MongoDB connection: Run `backend/test-weather.js`
-
-### Bot Repeats Same Question
-
-1. Speak the answer more clearly
-2. Check conversation history (left pane) for context
-3. Try manual input instead
-4. Click "Start New Booking" if stuck in loop
-
-### Build Errors
-
-```powershell
-# Clear node_modules and reinstall
-Remove-Item -Recurse node_modules
-Remove-Item package-lock.json
-npm install
-
-# Frontend Vite errors
-cd frontend
-Remove-Item -Recurse node_modules, .vite
-npm install
-```
+- Mic: allow permissions; close other apps; prefer Chrome/Edge.
+- Speech: speak clearly; retry “Speak”; use form as fallback.
+- Weather: check API key; ensure date within 5 days; city supported.
+- Backend: server running; `VITE_SERVER_URL` set; CORS/port ok.
+- Save: Mongo URI correct; cluster active; required fields present.
 
 ## 🔐 Security Considerations
 
 ### Current Implementation (Development Only)
 
-⚠️ **NOT PRODUCTION-READY** - This is a portfolio/demo project
+⚠️ **NOT PRODUCTION-READY**
 
 - No authentication or user accounts
 - API endpoints publicly accessible
@@ -771,7 +609,6 @@ npm install
 - [Tailwind CSS Docs](https://tailwindcss.com/docs)
 - [Vite Guide](https://vitejs.dev/guide/)
 
-
 ## 🚀 Future Enhancements
 
 ### Phase 1: Core Features (MVP)
@@ -806,34 +643,6 @@ npm install
 - [ ] **Load Balancing**: Horizontal scaling for production
 - [ ] **Docker Deployment**: Containerization for easier deployment
 
-## 👥 Contributing
-
-Contributions welcome! Please follow these guidelines:
-
-### How to Contribute
-
-1. **Fork** the repository
-2. **Create a branch**: `git checkout -b feature/amazing-feature`
-3. **Commit changes**: `git commit -m 'Add amazing feature'`
-4. **Push to branch**: `git push origin feature/amazing-feature`
-5. **Open a Pull Request**
-
-### Code Style
-
-- Use **ES6+ syntax** (arrow functions, destructuring, async/await)
-- Follow existing patterns (modular, small functions <50 lines)
-- Add comments for complex logic
-- Use **Prettier** for formatting (2-space indent)
-- Test locally before committing
-
-### Pull Request Checklist
-
-- [ ] Code follows project structure (services, controllers, utils)
-- [ ] No console.log statements (use proper logging)
-- [ ] All tests pass (if applicable)
-- [ ] Updated README if new features added
-- [ ] No merge conflicts with main branch
-
 ## 📄 License
 
 **MIT License**
@@ -863,7 +672,6 @@ SOFTWARE.
 - **Issues**: Report bugs or request features via [GitHub Issues](https://github.com/vedrathavi/Restaurant-Booking-Agent/issues)
 - **Repository**: [github.com/vedrathavi/Restaurant-Booking-Agent](https://github.com/vedrathavi/Restaurant-Booking-Agent)
 - **Developer**: Ved Rathavi
-
 
 ---
 

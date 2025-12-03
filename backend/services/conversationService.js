@@ -3,6 +3,7 @@
 
 import { GoogleGenAI } from "@google/genai";
 import { generateVoiceResponse } from "./geminiVoiceService.js";
+import { isBookingComplete, getMissingFields, getOptionalMissingFields } from "./conversationUtils.js";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -149,6 +150,11 @@ EXTRACTION RULES:
 
 6. SPECIAL REQUESTS: Extract any mentions or "None"
 
+7. SEATING:
+  - If user says "indoor|inside" → seatingPreference: "indoor"
+  - If user says "outdoor|outside" → seatingPreference: "outdoor"
+  - If not mentioned → seatingPreference: "indoor"
+
 CRITICAL - READ THIS:
 - If last assistant message asked "How many guests?" and user says "4", EXTRACT 4 as numberOfGuests
 - If last assistant message asked "What name?" and user says "John", EXTRACT "John" as customerName
@@ -159,7 +165,7 @@ CRITICAL - READ THIS:
 - MAXIMUM booking window: 5 days from today ONLY
 
 Return JSON with ONLY fields mentioned in last message:
-{"customerName": "value or null", "numberOfGuests": number or null, "bookingDate": "YYYY-MM-DD or null", "bookingTime": "HH:MM or null", "cuisinePreference": "value or null", "specialRequests": "value or null"}
+{"customerName": "value or null", "numberOfGuests": number or null, "bookingDate": "YYYY-MM-DD or null", "bookingTime": "HH:MM or null", "cuisinePreference": "value or null", "specialRequests": "value or null", "seatingPreference": "indoor|outdoor or null"}
 
 Empty response if nothing new: {}`;
 
@@ -305,41 +311,7 @@ ${
 /**
  * Check if all required fields are present (optional fields asked separately)
  */
-function isBookingComplete(data) {
-  const hasRequired = !!(
-    data.customerName &&
-    data.numberOfGuests &&
-    data.bookingDate &&
-    data.bookingTime
-  );
-
-  // Return true only if required fields are filled
-  // Optional fields (cuisine, special requests) will be asked after
-  return hasRequired;
-}
-
-/**
- * Get list of missing required fields
- */
-function getMissingFields(data) {
-  const required = [
-    "customerName",
-    "numberOfGuests",
-    "bookingDate",
-    "bookingTime",
-  ];
-  return required.filter((field) => !data[field]);
-}
-
-/**
- * Get list of missing optional fields
- */
-function getOptionalMissingFields(data) {
-  const optional = [];
-  if (!data.cuisinePreference) optional.push("cuisinePreference");
-  if (!data.specialRequests) optional.push("specialRequests");
-  return optional;
-}
+// Moved helpers to conversationUtils.js
 
 /**
  * Clear conversation history (call after booking confirmed)

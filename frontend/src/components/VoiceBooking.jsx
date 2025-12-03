@@ -4,35 +4,20 @@ import { useSpeechSynthesis } from "../hooks/useSpeechSynthesis";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 import apiClient from "../utils/apiClient";
 import { API_ENDPOINTS } from "../config/constants";
+import { FaMicrophone } from "react-icons/fa";
+import { STEPS } from "../utils/steps";
 import {
-  FaMicrophone,
-  FaMicrophoneSlash,
-  FaPlay,
-  FaStop,
-  FaRedo,
-  FaCheck,
-  FaEdit,
-  FaCalendar,
-  FaClock,
-  FaUsers,
-  FaUtensils,
-  FaSun,
-  FaMoon,
-} from "react-icons/fa";
+  isSeatingIndoor,
+  isSeatingOutdoor,
+  userWantsToChange,
+  userSpecifiesField,
+  isPositive,
+} from "../utils/voicePatterns";
+import ConversationPane from "./ConversationPane";
+import VoiceControls from "./VoiceControls";
+import BookingForm from "./BookingForm";
 
-const STEPS = {
-  IDLE: "IDLE",
-  ASK_NAME: "ASK_NAME",
-  ASK_GUESTS: "ASK_GUESTS",
-  ASK_DATE: "ASK_DATE",
-  ASK_TIME: "ASK_TIME",
-  ASK_CUISINE: "ASK_CUISINE",
-  ASK_SPECIAL_REQUEST: "ASK_SPECIAL_REQUEST",
-  FETCH_WEATHER: "FETCH_WEATHER",
-  CONFIRM_DETAILS: "CONFIRM_DETAILS",
-  SAVE_BOOKING: "SAVE_BOOKING",
-  COMPLETE: "COMPLETE",
-};
+// Steps moved to utils/steps for clarity
 
 const STORAGE_KEY = "hotel_booking_session";
 
@@ -182,6 +167,32 @@ export default function VoiceBooking() {
       return;
     }
 
+    // Quick handle for seating preference via voice
+    const lower = transcript.toLowerCase();
+    if (step === STEPS.FETCH_WEATHER || step === STEPS.CONFIRM_DETAILS) {
+      if (/\b(indoor|inside)\b/.test(lower)) {
+        setBooking((prev) => ({ ...prev, seatingPreference: "indoor" }));
+        await speakAndShow("Great! Indoor seating set.");
+        if (step === STEPS.FETCH_WEATHER) {
+          setTimeout(() => moveTo(STEPS.CONFIRM_DETAILS), 800);
+        } else {
+          // Re-read confirmation
+          setTimeout(() => moveTo(STEPS.CONFIRM_DETAILS), 800);
+        }
+        return;
+      }
+      if (/\b(outdoor|outside)\b/.test(lower)) {
+        setBooking((prev) => ({ ...prev, seatingPreference: "outdoor" }));
+        await speakAndShow("Perfect! Outdoor seating set.");
+        if (step === STEPS.FETCH_WEATHER) {
+          setTimeout(() => moveTo(STEPS.CONFIRM_DETAILS), 800);
+        } else {
+          setTimeout(() => moveTo(STEPS.CONFIRM_DETAILS), 800);
+        }
+        return;
+      }
+    }
+
     // Process with Gemini AI
     await processWithGemini(transcript);
   }
@@ -189,8 +200,8 @@ export default function VoiceBooking() {
   // Process conversation with Gemini AI
   async function processWithGemini(userMessage) {
     try {
-      // If we're at confirmation step, handle separately
-      if (step === STEPS.CONFIRM_DETAILS) {
+      // If we're at seating confirmation (weather) or final confirmation, handle locally
+      if (step === STEPS.FETCH_WEATHER || step === STEPS.CONFIRM_DETAILS) {
         await handleConfirmation(userMessage);
         return;
       }
@@ -557,19 +568,15 @@ export default function VoiceBooking() {
 
     // If we're waiting for seating preference confirmation after weather check
     if (step === STEPS.FETCH_WEATHER) {
-      if (/indoor/i.test(lower)) {
+      if (isSeatingIndoor(lower)) {
         setBooking((prev) => ({ ...prev, seatingPreference: "indoor" }));
         await speakAndShow("Great! Indoor seating it is.");
         setTimeout(() => moveTo(STEPS.CONFIRM_DETAILS), 1000);
-      } else if (/outdoor/i.test(lower)) {
+      } else if (isSeatingOutdoor(lower)) {
         setBooking((prev) => ({ ...prev, seatingPreference: "outdoor" }));
         await speakAndShow("Perfect! Outdoor seating reserved for you.");
         setTimeout(() => moveTo(STEPS.CONFIRM_DETAILS), 1000);
-      } else if (
-        /yes|yeah|sure|ok|okay|sounds good|that's fine|go with it|stick/i.test(
-          lower
-        )
-      ) {
+      } else if (isPositive(lower)) {
         await speakAndShow("Excellent choice!");
         setTimeout(() => moveTo(STEPS.CONFIRM_DETAILS), 1000);
       } else {
@@ -582,36 +589,37 @@ export default function VoiceBooking() {
     }
 
     // Regular confirmation at final step
-    const wantsToChange =
-      /change|edit|modify|update|different|no|wait|actually/i.test(lower);
-    const isPositive =
-      /yes|yeah|sure|confirm|proceed|ok|okay|correct|right|perfect|good|looks good/i.test(
-        lower
-      );
+    const wantsToChange = userWantsToChange(lower);
+    const positive = isPositive(lower);
 
     if (wantsToChange) {
-      await speakAndShow(
-        "No problem! What would you like to change? You can tell me or edit the fields manually below."
-      );
-
-      // Process the change request with Gemini
-      setStep(STEPS.ASK_GUESTS); // Go back to conversation mode
-      setWeatherRecommendationGiven(false); // Reset if they want to change
-
-      // If they mentioned what to change, process it
-      if (
-        lower.includes("indoor") ||
-        lower.includes("outdoor") ||
-        lower.includes("date") ||
-        lower.includes("time") ||
-        lower.includes("guests") ||
-        lower.includes("cuisine")
-      ) {
-        setTimeout(() => processWithGemini(userMessage), 1000);
-      } else {
-        setTimeout(() => startListening(), 1000);
+      // Direct seating change without Gemini
+      if (/\b(indoor|inside)\b/.test(lower)) {
+        setBooking((prev) => ({ ...prev, seatingPreference: "indoor" }));
+        await speakAndShow("Done. Indoor seating set.");
+        setTimeout(() => moveTo(STEPS.CONFIRM_DETAILS), 800);
+        return;
       }
-    } else if (isPositive) {
+      if (/\b(outdoor|outside)\b/.test(lower)) {
+        setBooking((prev) => ({ ...prev, seatingPreference: "outdoor" }));
+        await speakAndShow("Done. Outdoor seating set.");
+        setTimeout(() => moveTo(STEPS.CONFIRM_DETAILS), 800);
+        return;
+      }
+
+      await speakAndShow("No problem! What would you like to change?");
+
+      // Enter conversation mode for field changes
+      setStep(STEPS.ASK_NAME);
+      setWeatherRecommendationGiven(false);
+
+      // If message specifies the change (e.g., "change date to tomorrow") let Gemini extract
+      if (/(date|time|guest|guests|name|cuisine|special)/i.test(lower)) {
+        setTimeout(() => processWithGemini(userMessage), 600);
+      } else {
+        setTimeout(() => startListening(), 600);
+      }
+    } else if (positive) {
       await moveTo(STEPS.SAVE_BOOKING);
     } else {
       await speakAndShow(
@@ -635,282 +643,44 @@ export default function VoiceBooking() {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 ">
           {/* Left Column - Voice Assistant */}
-          <div className="bg-white rounded-2xl shadow-xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">
-                Voice Assistant
-              </h2>
-              {isSpeaking && (
-                <span className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
-                  <FaPlay className="animate-pulse" /> Speaking
-                </span>
-              )}
-              {isListening && (
-                <span className="flex items-center gap-2 px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm">
-                  <FaMicrophone className="animate-pulse" /> Listening
-                </span>
-              )}
-            </div>
-
-            {/* Conversation */}
-            <div className="bg-gray-50 rounded-xl p-4 mb-4 h-96 overflow-y-auto border border-gray-200">
-              {conversation.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                  <FaMicrophone className="text-6xl mb-4" />
-                  <p className="text-center">
-                    Start booking to begin conversation
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {conversation.map((msg, idx) => (
-                    <div
-                      key={idx}
-                      className={`flex ${
-                        msg.type === "user" ? "justify-end" : "justify-start"
-                      }`}
-                    >
-                      <div
-                        className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                          msg.type === "user"
-                            ? "bg-blue-600 text-white"
-                            : msg.type === "bot"
-                            ? "bg-white border border-gray-200 text-gray-800 shadow-sm"
-                            : "bg-red-50 text-red-800 border border-red-200"
-                        }`}
-                      >
-                        <p className="text-xs font-semibold mb-1 opacity-70">
-                          {msg.type === "user"
-                            ? "You"
-                            : msg.type === "bot"
-                            ? "Assistant"
-                            : "Error"}
-                        </p>
-                        <p className="text-sm">{msg.text}</p>
-                      </div>
-                    </div>
-                  ))}
-                  <div ref={conversationEndRef} />
-                </div>
-              )}
-            </div>
-
-            {/* Control Buttons */}
-            <div className="flex gap-3">
-              {showContinuePrompt && !isActive ? (
-                <>
-                  <button
-                    onClick={continueBooking}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition font-semibold shadow-lg"
-                  >
-                    <FaPlay /> Continue Previous
-                  </button>
-                  <button
-                    onClick={startFreshBooking}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-semibold shadow-lg"
-                  >
-                    <FaRedo /> Start New
-                  </button>
-                </>
-              ) : !isActive ? (
-                <button
-                  onClick={startBooking}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-semibold shadow-lg text-lg"
-                >
-                  <FaMicrophone /> Start Voice Booking
-                </button>
-              ) : (
-                <>
-                  <button
-                    onClick={() => {
-                      stopSpeaking();
-                      if (isListening) {
-                        stopListening();
-                      } else {
-                        startListening();
-                      }
-                    }}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 ${
-                      isListening
-                        ? "bg-orange-600 hover:bg-orange-700"
-                        : "bg-green-600 hover:bg-green-700"
-                    } text-white rounded-xl transition font-semibold shadow-lg`}
-                  >
-                    {isListening ? (
-                      <>
-                        <FaMicrophoneSlash /> Stop
-                      </>
-                    ) : (
-                      <>
-                        <FaMicrophone /> Speak
-                      </>
-                    )}
-                  </button>
-                  <button
-                    onClick={resetBooking}
-                    className="px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition font-semibold shadow-lg flex items-center gap-2"
-                  >
-                    <FaStop /> Cancel
-                  </button>
-                </>
-              )}
+          <div>
+            <ConversationPane
+              conversation={conversation}
+              isSpeaking={isSpeaking}
+              isListening={isListening}
+              endRef={conversationEndRef}
+            />
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+              <VoiceControls
+                showContinuePrompt={showContinuePrompt}
+                isActive={isActive}
+                isListening={isListening}
+                onContinue={continueBooking}
+                onStartNew={startFreshBooking}
+                onStart={startBooking}
+                onToggleListen={() => {
+                  if (isListening) {
+                    stopListening();
+                  } else {
+                    startListening();
+                  }
+                }}
+                onCancel={resetBooking}
+                onStopSpeaking={stopSpeaking}
+              />
             </div>
           </div>
 
           {/* Right Column - Booking Form */}
-          <div className="bg-white rounded-2xl shadow-xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">
-                Booking Details
-              </h2>
-              {isActive && (
-                <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                  Active
-                </span>
-              )}
-            </div>
-
-            {!isActive ? (
-              <div className="flex flex-col items-center justify-center h-96 text-gray-400">
-                <FaEdit className="text-6xl mb-4" />
-                <p className="text-center">
-                  Start a booking to fill in details
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                {/* Name */}
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                    <FaEdit className="text-blue-600" /> Name
-                  </label>
-                  <input
-                    type="text"
-                    value={booking.customerName}
-                    onChange={(e) =>
-                      handleFieldChange("customerName", e.target.value)
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter your name"
-                  />
-                </div>
-
-                {/* Number of Guests */}
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                    <FaUsers className="text-blue-600" /> Number of Guests
-                  </label>
-                  <input
-                    type="number"
-                    value={booking.numberOfGuests}
-                    onChange={(e) =>
-                      handleFieldChange("numberOfGuests", e.target.value)
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="How many guests?"
-                  />
-                </div>
-
-                {/* Date & Time */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                      <FaCalendar className="text-blue-600" /> Date
-                    </label>
-                    <input
-                      type="date"
-                      value={booking.bookingDate}
-                      onChange={(e) =>
-                        handleFieldChange("bookingDate", e.target.value)
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                      <FaClock className="text-blue-600" /> Time
-                    </label>
-                    <input
-                      type="time"
-                      value={booking.bookingTime}
-                      onChange={(e) =>
-                        handleFieldChange("bookingTime", e.target.value)
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
-                {/* Cuisine Preference */}
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                    <FaUtensils className="text-blue-600" /> Cuisine Preference
-                  </label>
-                  <input
-                    type="text"
-                    value={booking.cuisinePreference}
-                    onChange={(e) =>
-                      handleFieldChange("cuisinePreference", e.target.value)
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="e.g., Italian, Chinese"
-                  />
-                </div>
-
-                {/* Seating Preference */}
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                    {booking.seatingPreference === "outdoor" ? (
-                      <FaSun className="text-yellow-600" />
-                    ) : (
-                      <FaMoon className="text-indigo-600" />
-                    )}
-                    Seating Preference
-                  </label>
-                  <select
-                    value={booking.seatingPreference}
-                    onChange={(e) =>
-                      handleFieldChange("seatingPreference", e.target.value)
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">Auto (based on weather)</option>
-                    <option value="indoor">Indoor</option>
-                    <option value="outdoor">Outdoor</option>
-                  </select>
-                </div>
-
-                {/* Special Requests */}
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                    <FaEdit className="text-blue-600" /> Special Requests
-                  </label>
-                  <textarea
-                    value={booking.specialRequests}
-                    onChange={(e) =>
-                      handleFieldChange("specialRequests", e.target.value)
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                    rows="3"
-                    placeholder="Birthday, anniversary, dietary restrictions, etc."
-                  />
-                </div>
-
-                {/* Confirm Button */}
-                {step === STEPS.CONFIRM_DETAILS && (
-                  <button
-                    onClick={() => moveTo(STEPS.SAVE_BOOKING)}
-                    className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition font-semibold shadow-lg text-lg"
-                  >
-                    <FaCheck /> Confirm & Save Booking
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+          <BookingForm
+            isActive={isActive}
+            booking={booking}
+            onFieldChange={handleFieldChange}
+            step={step}
+            onConfirm={moveTo}
+          />
         </div>
       </div>
     </div>

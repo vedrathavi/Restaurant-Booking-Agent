@@ -28,7 +28,6 @@ async function start() {
     console.log("Connected to MongoDB");
     app.use("/api/bookings", bookingsRouter);
     app.use("/api/chat", chatRouter);
-      
 
     app.listen(PORT, () => {
       console.log(`Server listening on http://localhost:${PORT}`);

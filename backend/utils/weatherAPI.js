@@ -29,16 +29,20 @@ export async function fetchWeatherForecast(city = DEFAULT_CITY, bookingDate) {
   // Validate booking date is within 5-day forecast window
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const bookingDateObj = new Date(bookingDate + 'T00:00:00');
+  const bookingDateObj = new Date(bookingDate + "T00:00:00");
   const maxDate = new Date(today);
   maxDate.setDate(maxDate.getDate() + 5);
-  
+
   if (bookingDateObj < today) {
     throw new Error(`Cannot get weather for past date: ${bookingDate}`);
   }
-  
+
   if (bookingDateObj > maxDate) {
-    throw new Error(`Weather forecast only available for next 5 days. Requested: ${bookingDate}, Max: ${maxDate.toISOString().split('T')[0]}`);
+    throw new Error(
+      `Weather forecast only available for next 5 days. Requested: ${bookingDate}, Max: ${
+        maxDate.toISOString().split("T")[0]
+      }`
+    );
   }
 
   // Get coordinates for city (case-insensitive lookup)

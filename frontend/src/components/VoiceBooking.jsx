@@ -79,7 +79,9 @@ export default function VoiceBooking() {
   const conversationEndRef = useRef(null);
   const sessionIdRef = useRef(savedData?.sessionId || `session-${Date.now()}`);
   const [showContinuePrompt, setShowContinuePrompt] = useState(
-    savedData && savedData.step !== STEPS.IDLE && savedData.step !== STEPS.COMPLETE
+    savedData &&
+      savedData.step !== STEPS.IDLE &&
+      savedData.step !== STEPS.COMPLETE
   );
 
   // Save to localStorage whenever state changes
@@ -123,17 +125,18 @@ export default function VoiceBooking() {
     setIsActive(true);
     setStep(STEPS.ASK_NAME);
     setHasAskedToContinue(true);
-    
-    const greeting = "Hello! Welcome to our restaurant. I'm here to help you book a table. May I have your name please?";
+
+    const greeting =
+      "Hello! Welcome to our restaurant. I'm here to help you book a table. May I have your name please?";
     addMessage("bot", greeting);
-    
+
     // Stop any ongoing speech and listening
     stopSpeaking();
     stopListening();
-    
+
     // Wait a bit for cleanup
     await new Promise((resolve) => setTimeout(resolve, 100));
-    
+
     await speak(greeting, () => {
       // Auto-start listening after greeting
       setTimeout(() => startListening(), 500);
@@ -145,7 +148,7 @@ export default function VoiceBooking() {
     setShowContinuePrompt(false);
     setIsActive(true);
     setHasAskedToContinue(true);
-    await speakAndShow('Great! Let\'s continue where we left off.');
+    await speakAndShow("Great! Let's continue where we left off.");
     setTimeout(() => startListening(), 1000);
   };
 
@@ -208,61 +211,87 @@ export default function VoiceBooking() {
       if (data.bookingData) {
         // Validate date is not in the past and not more than 10 days in future
         if (data.bookingData.bookingDate) {
-          const bookingDate = new Date(data.bookingData.bookingDate + 'T00:00:00');
+          const bookingDate = new Date(
+            data.bookingData.bookingDate + "T00:00:00"
+          );
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          
+
           const maxDate = new Date(today);
           maxDate.setDate(maxDate.getDate() + 5);
-          
-          console.log('Validating date:', data.bookingData.bookingDate, 'Booking:', bookingDate, 'Today:', today, 'Max:', maxDate);
-          
+
+          console.log(
+            "Validating date:",
+            data.bookingData.bookingDate,
+            "Booking:",
+            bookingDate,
+            "Today:",
+            today,
+            "Max:",
+            maxDate
+          );
+
           if (bookingDate < today) {
             // Reject past dates - ask for valid date immediately
-            console.log('REJECTING PAST DATE');
+            console.log("REJECTING PAST DATE");
             setConversation((prev) => prev.slice(0, -1));
-            
+
             // Keep the step at ASK_DATE to ask again
             setStep(STEPS.ASK_DATE);
-            await speakAndShow(`Sorry, that date has passed. Please choose today (${today.toLocaleDateString('en-IN')}) or a future date within the next 5 days.`);
+            await speakAndShow(
+              `Sorry, that date has passed. Please choose today (${today.toLocaleDateString(
+                "en-IN"
+              )}) or a future date within the next 5 days.`
+            );
             return;
           }
-          
+
           if (bookingDate > maxDate) {
             // Reject dates more than 5 days in future - ask for valid date immediately
-            console.log('REJECTING DATE TOO FAR IN FUTURE');
+            console.log("REJECTING DATE TOO FAR IN FUTURE");
             setConversation((prev) => prev.slice(0, -1));
-            
+
             // Keep the step at ASK_DATE to ask again
             setStep(STEPS.ASK_DATE);
-            await speakAndShow(`I can only book within the next 5 days. Our weather data is limited. Please choose a date between ${today.toLocaleDateString('en-IN')} and ${maxDate.toLocaleDateString('en-IN')}.`);
+            await speakAndShow(
+              `I can only book within the next 5 days. Our weather data is limited. Please choose a date between ${today.toLocaleDateString(
+                "en-IN"
+              )} and ${maxDate.toLocaleDateString("en-IN")}.`
+            );
             return;
           }
-          
+
           // If booking is for today, validate time is not in the past
-          if (data.bookingData.bookingTime && bookingDate.getTime() === today.getTime()) {
-            const [hours, minutes] = data.bookingData.bookingTime.split(':').map(Number);
+          if (
+            data.bookingData.bookingTime &&
+            bookingDate.getTime() === today.getTime()
+          ) {
+            const [hours, minutes] = data.bookingData.bookingTime
+              .split(":")
+              .map(Number);
             const bookingDateTime = new Date();
             bookingDateTime.setHours(hours, minutes, 0, 0);
             const now = new Date();
-            
+
             if (bookingDateTime <= now) {
               setConversation((prev) => prev.slice(0, -1));
-              setBooking(prev => ({ ...prev, bookingTime: '' }));
-              
+              setBooking((prev) => ({ ...prev, bookingTime: "" }));
+
               // Show current time in IST for reference
-              const currentIST = new Date().toLocaleTimeString('en-IN', { 
-                hour: '2-digit', 
-                minute: '2-digit', 
+              const currentIST = new Date().toLocaleTimeString("en-IN", {
+                hour: "2-digit",
+                minute: "2-digit",
                 hour12: false,
-                timeZone: 'Asia/Kolkata'
+                timeZone: "Asia/Kolkata",
               });
-              await speakAndShow(`For today's bookings, please choose a time after ${currentIST}. What time works for you?`);
+              await speakAndShow(
+                `For today's bookings, please choose a time after ${currentIST}. What time works for you?`
+              );
               return;
             }
           }
         }
-        
+
         const updatedBooking = {
           ...booking,
           ...data.bookingData,
@@ -288,13 +317,14 @@ export default function VoiceBooking() {
         }
 
         // Check if ALL info is complete (including cuisine and special requests)
-        const allFieldsComplete = updatedBooking.customerName && 
-                                  updatedBooking.numberOfGuests && 
-                                  updatedBooking.bookingDate && 
-                                  updatedBooking.bookingTime &&
-                                  updatedBooking.cuisinePreference &&
-                                  updatedBooking.specialRequests;
-        
+        const allFieldsComplete =
+          updatedBooking.customerName &&
+          updatedBooking.numberOfGuests &&
+          updatedBooking.bookingDate &&
+          updatedBooking.bookingTime &&
+          updatedBooking.cuisinePreference &&
+          updatedBooking.specialRequests;
+
         if (allFieldsComplete) {
           // Only fetch weather if not already done or if date/time changed
           if (!weatherRecommendationGiven || dateOrTimeChanged) {
@@ -372,7 +402,7 @@ export default function VoiceBooking() {
   async function fetchWeatherAndRespond() {
     try {
       setStep(STEPS.FETCH_WEATHER);
-      
+
       // Speak without auto-listening
       addMessage("bot", "Let me check the weather for your booking date.");
       await speak("Let me check the weather for your booking date.");
@@ -430,22 +460,25 @@ export default function VoiceBooking() {
 
       setStep(STEPS.COMPLETE);
       stopListening(); // Ensure mic is stopped
-      
+
       // Spell booking ID letter by letter with spaces
-      const bookingIdSpelled = data.bookingId.split('').join(' ');
+      const bookingIdSpelled = data.bookingId.split("").join(" ");
       const completionMessage = `Wonderful! Your table has been successfully booked. Your booking ID is ${bookingIdSpelled}. We look forward to serving you. Have a great day!`;
-      
-      addMessage('bot', `Wonderful! Your table has been successfully booked. Your booking ID is ${data.bookingId}. We look forward to serving you. Have a great day!`);
-      
+
+      addMessage(
+        "bot",
+        `Wonderful! Your table has been successfully booked. Your booking ID is ${data.bookingId}. We look forward to serving you. Have a great day!`
+      );
+
       // Stop any ongoing speech and listening
       stopSpeaking();
       stopListening();
-      
+
       await new Promise((resolve) => setTimeout(resolve, 100));
-      
+
       // Speak without callback to prevent auto-listening
       await speak(completionMessage);
-      
+
       setTimeout(() => resetBooking(), 5000);
     } catch (error) {
       console.error("Save booking error:", error);

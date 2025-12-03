@@ -89,9 +89,15 @@ async function extractBookingInfo(history, currentData) {
     .join("\n");
 
   const todayDate = new Date().toISOString().split("T")[0];
-  const tomorrowDate = new Date(Date.now() + 86400000).toISOString().split("T")[0];
-  const dayAfterTomorrowDate = new Date(Date.now() + 172800000).toISOString().split("T")[0];
-  const maxDate = new Date(Date.now() + 5 * 86400000).toISOString().split("T")[0];
+  const tomorrowDate = new Date(Date.now() + 86400000)
+    .toISOString()
+    .split("T")[0];
+  const dayAfterTomorrowDate = new Date(Date.now() + 172800000)
+    .toISOString()
+    .split("T")[0];
+  const maxDate = new Date(Date.now() + 5 * 86400000)
+    .toISOString()
+    .split("T")[0];
   const currentTime = new Date().toTimeString().slice(0, 5);
 
   const prompt = `Extract booking details from conversation. Return ONLY JSON.
@@ -100,7 +106,10 @@ CURRENT DATA:
 ${JSON.stringify(currentData, null, 2)}
 
 LAST 4 MESSAGES:
-${history.slice(-4).map((h) => `${h.role}: ${h.message}`).join("\n")}
+${history
+  .slice(-4)
+  .map((h) => `${h.role}: ${h.message}`)
+  .join("\n")}
 
 DATES (USE THESE EXACT VALUES):
 TODAY = ${todayDate}
@@ -154,13 +163,12 @@ Return JSON with ONLY fields mentioned in last message:
 
 Empty response if nothing new: {}`;
 
-
   try {
     const result = await model.generateContent({
       model: "gemini-2.5-flash",
       contents: prompt,
     });
-    
+
     const text = result.text
       .trim()
       .replace(/```json\n?/g, "")
@@ -191,33 +199,51 @@ async function generateContextualResponse(
   const optionalFields = getOptionalMissingFields(bookingData);
 
   // Check if user is trying to modify something
-  const isModifying = /change|edit|modify|update|different|instead|actually/i.test(userMessage);
-  
+  const isModifying =
+    /change|edit|modify|update|different|instead|actually/i.test(userMessage);
+
   // Check if user specified WHAT to change (contains specific field mentions)
-  const specifiesWhatToChange = /date|time|guest|guests|name|cuisine|seating|indoor|outdoor|special request/i.test(userMessage);
-  
+  const specifiesWhatToChange =
+    /date|time|guest|guests|name|cuisine|seating|indoor|outdoor|special request/i.test(
+      userMessage
+    );
+
   // Check if we've already asked "what to change" in recent history (last 6 messages)
-  const recentMessages = history.slice(-6).map(h => h.message.toLowerCase());
-  const alreadyAskedWhatToChange = recentMessages.some(msg => 
+  const recentMessages = history.slice(-6).map((h) => h.message.toLowerCase());
+  const alreadyAskedWhatToChange = recentMessages.some((msg) =>
     /what.*change|which.*change|what.*like.*change|which.*modify/.test(msg)
   );
 
   // Get filled fields to acknowledge
   const filledFields = [];
-  if (bookingData.customerName) filledFields.push(`name (${bookingData.customerName})`);
-  if (bookingData.numberOfGuests) filledFields.push(`${bookingData.numberOfGuests} guests`);
-  if (bookingData.bookingDate) filledFields.push(`date (${bookingData.bookingDate})`);
-  if (bookingData.bookingTime) filledFields.push(`time (${bookingData.bookingTime})`);
-  if (bookingData.cuisinePreference) filledFields.push(`${bookingData.cuisinePreference} cuisine`);
+  if (bookingData.customerName)
+    filledFields.push(`name (${bookingData.customerName})`);
+  if (bookingData.numberOfGuests)
+    filledFields.push(`${bookingData.numberOfGuests} guests`);
+  if (bookingData.bookingDate)
+    filledFields.push(`date (${bookingData.bookingDate})`);
+  if (bookingData.bookingTime)
+    filledFields.push(`time (${bookingData.bookingTime})`);
+  if (bookingData.cuisinePreference)
+    filledFields.push(`${bookingData.cuisinePreference} cuisine`);
   if (bookingData.specialRequests) filledFields.push(`special requests`);
 
   const contextPrompt = `You are a casual restaurant booking assistant. ONE SHORT sentence only (max 10 words).
 
-FILLED: ${filledFields.join(', ') || 'Nothing'}
-NEED: ${isComplete && optionalFields.length === 0 ? 'All done!' : isComplete ? optionalFields.join(', ') : missingFields.join(', ')}
+FILLED: ${filledFields.join(", ") || "Nothing"}
+NEED: ${
+    isComplete && optionalFields.length === 0
+      ? "All done!"
+      : isComplete
+      ? optionalFields.join(", ")
+      : missingFields.join(", ")
+  }
 
 LAST 3 EXCHANGES:
-${history.slice(-3).map((h) => `${h.role}: ${h.message}`).join("\n")}
+${history
+  .slice(-3)
+  .map((h) => `${h.role}: ${h.message}`)
+  .join("\n")}
 User just said: "${userMessage}"
 
 CRITICAL ANTI-LOOP RULES:
@@ -234,22 +260,22 @@ ${
   isModifying && specifiesWhatToChange
     ? 'Say: "Sure!"'
     : isModifying && alreadyAskedWhatToChange
-      ? 'Say: "Ready, go ahead"'
-      : isModifying
-        ? 'Ask: "What to change?"'
-        : missingFields.includes('customerName')
-          ? 'Acknowledge and ask: "Great! What name for the reservation?"'
-          : missingFields.includes('numberOfGuests')
-            ? 'Acknowledge and ask: "Awesome! How many guests?"'
-            : missingFields.includes('bookingDate')
-              ? 'Acknowledge and ask: "Perfect! What date? (Within next 5 days)"'
-              : missingFields.includes('bookingTime')
-                ? 'Acknowledge and ask: "Nice! What time?"'
-                : optionalFields.includes('cuisinePreference')
-                  ? 'Ask: "What cuisine do you prefer?"'
-                  : optionalFields.includes('specialRequests')
-                    ? 'Ask: "Any special requests or occasions?"'
-                    : 'Say: "Perfect! All set."'
+    ? 'Say: "Ready, go ahead"'
+    : isModifying
+    ? 'Ask: "What to change?"'
+    : missingFields.includes("customerName")
+    ? 'Acknowledge and ask: "Great! What name for the reservation?"'
+    : missingFields.includes("numberOfGuests")
+    ? 'Acknowledge and ask: "Awesome! How many guests?"'
+    : missingFields.includes("bookingDate")
+    ? 'Acknowledge and ask: "Perfect! What date? (Within next 5 days)"'
+    : missingFields.includes("bookingTime")
+    ? 'Acknowledge and ask: "Nice! What time?"'
+    : optionalFields.includes("cuisinePreference")
+    ? 'Ask: "What cuisine do you prefer?"'
+    : optionalFields.includes("specialRequests")
+    ? 'Ask: "Any special requests or occasions?"'
+    : 'Say: "Perfect! All set."'
 }`;
 
   try {
@@ -257,7 +283,7 @@ ${
       model: "gemini-2.5-flash",
       contents: contextPrompt,
     });
-    
+
     return result.text.trim();
   } catch (err) {
     console.error("Response generation error:", err.message);
@@ -286,7 +312,7 @@ function isBookingComplete(data) {
     data.bookingDate &&
     data.bookingTime
   );
-  
+
   // Return true only if required fields are filled
   // Optional fields (cuisine, special requests) will be asked after
   return hasRequired;

@@ -263,21 +263,25 @@ Expand in `backend/utils/weatherAPI.js`.
 ### Features
 
 1. **Real-time Conversation Display**
+
    - Chat-style interface showing both user and bot messages
    - Auto-scrolling conversation history
    - Color-coded messages (blue for user, gray for bot, red for errors)
 
 2. **Voice Status Indicators**
+
    - 🔊 Speaking indicator when bot is talking
    - 🎤 Listening indicator when microphone is active
 
 3. **Manual Edit Mode**
+
    - All booking fields are editable via form inputs
    - Date and time pickers for easy selection
    - Dropdown for seating preference
    - Edit anytime during the conversation
 
 4. **Conversation Flow**
+
    - ASK_NAME → ASK_GUESTS → ASK_DATE → ASK_TIME → ASK_CUISINE → ASK_SPECIAL_REQUEST → FETCH_WEATHER → CONFIRM_DETAILS → SAVE_BOOKING
 
 5. **Browser Support**
